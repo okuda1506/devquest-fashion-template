@@ -1,77 +1,77 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+    provider     = "prisma-client"
+    output       = "../src/generated/prisma"
+    moduleFormat = "cjs"
 }
 
 datasource db {
-  provider = "postgresql"
+    provider = "postgresql"
 }
 
 model Product {
-  id          String @id
-  name        String
-  description String
-  category    String
-  price       Int
-  stock       Int
-  isPublished Boolean @default(true)
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
+    id          String @id
+    name        String
+    description String
+    category    String
+    price       Int
+    stock       Int
+    isPublished Boolean @default(true)
+    cartItems   CartItem[]
+    orderItems  OrderItem[]
 
-  @@index([category])
+    @@index([category])
 }
 
 enum Role {
-  CUSTOMER
-  ADMIN
+    CUSTOMER
+    ADMIN
 }
 
 model User {
-  id           String @id @default(cuid())
-  email        String @unique
-  name         String
-  passwordHash String
-  role         Role @default(CUSTOMER)
-  cartItems    CartItem[]
-  orders       Order[]
+    id           String @id @default(cuid())
+    email        String @unique
+    name         String
+    passwordHash String
+    role         Role @default(CUSTOMER)
+    cartItems    CartItem[]
+    orders       Order[]
 }
 
 model CartItem {
-  userId    String
-  productId String
-  quantity  Int
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+    userId    String
+    productId String
+    quantity  Int
+    user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    product   Product @relation(fields: [productId], references: [id])
 
-  @@id([userId, productId])
+    @@id([userId, productId])
 }
 
 enum OrderStatus {
-  PLACED
-  SHIPPED
+    PLACED
+    SHIPPED
 }
 
 model Order {
-  id         String @id @default(cuid())
-  userId     String
-  total      Int
-  shippingAddress Json?
-  status     OrderStatus @default(PLACED)
-  createdAt  DateTime @default(now())
-  user       User @relation(fields: [userId], references: [id])
-  items      OrderItem[]
+    id         String @id @default(cuid())
+    userId     String
+    total      Int
+    shippingAddress Json?
+    status     OrderStatus @default(PLACED)
+    createdAt  DateTime @default(now())
+    user       User @relation(fields: [userId], references: [id])
+    items      OrderItem[]
 
-  @@index([userId, createdAt])
+    @@index([userId, createdAt])
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
-  name      String
-  unitPrice Int
-  quantity  Int
-  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+    id        String @id @default(cuid())
+    orderId   String
+    productId String
+    name      String
+    unitPrice Int
+    quantity  Int
+    order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    product   Product @relation(fields: [productId], references: [id])
 }

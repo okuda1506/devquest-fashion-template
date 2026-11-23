@@ -5,5 +5,9 @@ import { Admin } from './features/admin/admin';
 import './styles.css';
 
 createRoot(document.getElementById('root')!).render(
-  <HashRouter><SessionProvider app="admin"><Admin /></SessionProvider></HashRouter>,
+    <HashRouter>
+        <SessionProvider app="admin">
+            <Admin />
+        </SessionProvider>
+    </HashRouter>
 );

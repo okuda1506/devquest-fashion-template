@@ -1,44 +1,75 @@
-import { Body, ConflictException, Controller, Injectable, Module, NotFoundException, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    ConflictException,
+    Controller,
+    Injectable,
+    Module,
+    NotFoundException,
+    Param,
+    Patch,
+    UseGuards
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsInt, Max, Min, ValidateIf } from 'class-validator';
 import { Db } from '../db';
 import { RequireRole, AuthGuard, AuthModule } from '../auth/auth';
 
+/** 新しい在庫数と競合検出に用いる編集前の在庫数を受け取る */
 class UpdateStock {
-  @ApiProperty() @IsInt() @Min(0) @Max(100000) stock!: number;
-  @ApiPropertyOptional() @ValidateIf((_, value) => value !== undefined) @IsInt() @Min(0) expectedStock?: number;
+    @ApiProperty() @IsInt() @Min(0) @Max(100000) stock!: number;
+    @ApiPropertyOptional() @ValidateIf((_, value) => value !== undefined) @IsInt() @Min(0) expectedStock?: number;
 }
 
+/** 商品行に保存された在庫数を読み書きする */
 @Injectable()
 class InventoryRepository {
-  constructor(private readonly db: Db) {}
-  update(id: string, { stock, expectedStock }: UpdateStock) {
-    return this.db.product.updateMany({ where: { id, stock: expectedStock }, data: { stock } });
-  }
-  find(id: string) { return this.db.product.findUnique({ where: { id }, select: { id: true } }); }
+    /** 商品在庫を更新する DB クライアントを受け取る */
+    constructor(private readonly db: Db) {}
+    /** 編集前の在庫数が指定されている場合は一致する商品行だけを更新する */
+    update(id: string, { stock, expectedStock }: UpdateStock) {
+        // 購入などで在庫が変わっていた場合は古い編集値で上書きしない
+        return this.db.product.updateMany({ where: { id, stock: expectedStock }, data: { stock } });
+    }
+    /** 在庫更新に失敗した商品が存在するかを ID で調べる */
+    find(id: string) {
+        return this.db.product.findUnique({ where: { id }, select: { id: true } });
+    }
 }
 
+/** 在庫更新の結果から商品不存在と編集競合を切り分ける */
 @Injectable()
 class InventoryService {
-  constructor(private readonly repo: InventoryRepository) {}
-  async update(id: string, dto: UpdateStock) {
-    if ((await this.repo.update(id, dto)).count) return { updated: true };
-    if (dto.expectedStock !== undefined && await this.repo.find(id)) {
-      throw new ConflictException('在庫数が変更されました。一覧を更新してからやり直してください。');
+    /** 在庫と競合状態の確認に使うリポジトリを受け取る */
+    constructor(private readonly repo: InventoryRepository) {}
+    /** 在庫を更新し必要に応じて一覧の再読み込みを要求する */
+    async update(id: string, dto: UpdateStock) {
+        if ((await this.repo.update(id, dto)).count) return { updated: true };
+        if (dto.expectedStock !== undefined && (await this.repo.find(id))) {
+            throw new ConflictException('在庫数が変更されました。一覧を更新してからやり直してください。');
+        }
+        throw new NotFoundException('商品が見つかりません。');
     }
-    throw new NotFoundException('商品が見つかりません。');
-  }
 }
 
+/** 管理者が在庫数を更新するための API を提供する */
 @ApiTags('管理・在庫')
 @ApiBearerAuth()
 @RequireRole('ADMIN')
 @UseGuards(AuthGuard)
 @Controller('admin/inventory')
 class InventoryController {
-  constructor(private readonly inventory: InventoryService) {}
-  @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateStock) { return this.inventory.update(id, dto); }
+    /** 在庫更新を実行するサービスを受け取る */
+    constructor(private readonly inventory: InventoryService) {}
+    /** 商品 ID と入力値を使って在庫数の更新を依頼する */
+    @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateStock) {
+        return this.inventory.update(id, dto);
+    }
 }
 
-@Module({ imports: [AuthModule], controllers: [InventoryController], providers: [InventoryRepository, InventoryService] })
+/** 管理画面専用の在庫管理機能を構成する */
+@Module({
+    imports: [AuthModule],
+    controllers: [InventoryController],
+    providers: [InventoryRepository, InventoryService]
+})
 export class InventoryModule {}
