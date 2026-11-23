@@ -1,7 +1,7 @@
 import { categories, type Product } from '@thread/shared';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowDownRight, ArrowLeft, ArrowRight, Check, Plus, Search, ShoppingBag } from 'lucide-react';
+import { ArrowDownRight, ArrowLeft, ArrowRight, Check, Minus, Plus, Search, ShoppingBag } from 'lucide-react';
 import campaignImage from '../../assets/campaign.webp';
 import { ProductVisual } from './product-visual';
 import { api, yen } from '../../api';
@@ -66,7 +66,7 @@ export function Products() {
         }}>商品を見る <ArrowDownRight size={17} aria-hidden="true" /></button>
       </div>
       <img className="campaign-photo" src={campaignImage} width={1536} height={1024} fetchPriority="high"
-        alt="コンクリートの壁を背景に、ジャケットとワイドパンツを着て歩くモデル" />
+        alt="コンクリートの建物を背景に、ジャケットとワイドパンツを着こなす女性と男性のモデル" />
     </section>
     <section className="catalog" aria-labelledby="collection">
       <div className="catalog-toolbar">
@@ -130,11 +130,15 @@ function AddToCart({ product, token, cartIcon, productImage }: {
   cartIcon: RefObject<HTMLSpanElement | null>;
   productImage: RefObject<HTMLImageElement | null>;
 }) {
-  const { refresh } = useCart();
+  const { items, refresh } = useCart();
+  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const stopAnimation = useRef<(() => void) | undefined>(undefined);
+  const inCart = items?.find(item => item.productId === product.id)?.quantity ?? 0;
+  const available = Math.max(0, Math.min(product.stock, 99) - inCart);
+  const selected = Math.min(quantity, available);
 
   useEffect(() => () => stopAnimation.current?.(), []);
 
@@ -144,7 +148,7 @@ function AddToCart({ product, token, cartIcon, productImage }: {
     setError('');
     setBusy(true);
     try {
-      await api('/cart/' + product.id, { method: 'PUT', body: '{"quantity":1}' }, token);
+      await api('/cart/' + encodeURIComponent(product.id), { method: 'POST', body: JSON.stringify({ quantity: selected }) }, token);
       refresh();
       setAdded(true);
     } catch (cause) {
@@ -159,11 +163,23 @@ function AddToCart({ product, token, cartIcon, productImage }: {
   }
 
   return <div className="detail-actions">
-    <button type="button" className="detail-add" disabled={!product.stock || busy} onClick={event => void addToCart(event.currentTarget)}>
-      <ShoppingBag size={18} aria-hidden="true" />
-      {busy ? '追加中…' : 'カートに追加'}
-      <Plus size={17} aria-hidden="true" />
-    </button>
+    <div className="detail-quantity-label"><span>追加点数</span>{inCart > 0 && <span>カート内 {inCart} 点</span>}</div>
+    <div className="detail-purchase-row">
+      <div className="detail-quantity" role="group" aria-label="追加点数">
+        <button type="button" aria-label="追加点数を減らす" disabled={busy || selected <= 1} onClick={() => setQuantity(selected - 1)}>
+          <Minus size={15} aria-hidden="true" />
+        </button>
+        <output>{selected}</output>
+        <button type="button" aria-label="追加点数を増やす" disabled={busy || selected >= available} onClick={() => setQuantity(selected + 1)}>
+          <Plus size={15} aria-hidden="true" />
+        </button>
+      </div>
+      <button type="button" className="detail-add" disabled={busy || selected === 0} onClick={event => void addToCart(event.currentTarget)}>
+        <ShoppingBag size={18} aria-hidden="true" />
+        {busy ? '追加中…' : 'カートに追加'}
+      </button>
+    </div>
+    {product.stock > 0 && available === 0 && <p className="detail-quantity-note">追加できる上限に達しました。</p>}
     <div className={added ? 'detail-cart-feedback is-added' : 'detail-cart-feedback'}>
       <p role="status">{added && <><span className="detail-cart-check"><Check size={14} aria-hidden="true" /></span>カートに追加しました。</>}</p>
       {added && <Link className="detail-cart-link" to="/cart">カートを見る <ArrowRight size={16} aria-hidden="true" /></Link>}

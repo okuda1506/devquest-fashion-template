@@ -51,6 +51,19 @@ test('公開商品を検索でき、非公開商品の詳細と不正な入力�
   await request(server).get('/api/products?page=0').expect(400);
 });
 
+test('同じ商品を並行して追加しても加算し、在庫を超える追加は拒否する', async () => {
+  const server = app.getHttpServer();
+  const path = '/api/cart/' + sku;
+  const auth = { type: 'bearer' } as const;
+  const add = (quantity: number) => request(server).post(path).auth(shopper, auth).send({ quantity });
+  const [first, second] = await Promise.all([add(1).expect(201), add(1).expect(201)]);
+  expect([first.body.quantity, second.body.quantity].sort()).toEqual([1, 2]);
+  await add(1).expect(409);
+  const cart = await request(server).get('/api/cart').auth(shopper, auth).expect(200);
+  expect(cart.body).toMatchObject([{ productId: sku, quantity: 2 }]);
+  await request(server).delete(path).auth(shopper, auth).expect(200);
+});
+
 test('配送先と確認済みの商品・金額でのみ注文を確定し、再送しても注文を重複させない', async () => {
   const server = app.getHttpServer();
   const shippingAddress = {

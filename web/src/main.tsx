@@ -16,6 +16,7 @@ function Shop() {
   const { items } = useCart();
   const cartQuantity = items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const cartIcon = useRef<HTMLSpanElement>(null);
+  const homePage = useMatch('/');
   const detailPage = useMatch('/products/:id');
   return <>
     <header className={detailPage ? 'header header--sticky' : 'header'}><div className="header-inner">
@@ -36,7 +37,7 @@ function Shop() {
         </NavLink>
       </nav>
     </div></header>
-    <main><Routes>
+    <main className={homePage ? 'store-home' : undefined}><Routes>
       <Route index element={<Products />} /><Route path="/products/:id" element={<ProductDetail cartIcon={cartIcon} />} />
       <Route path="/cart" element={<Cart />} /><Route path="/orders" element={<Orders />} />
       <Route path="/checkout" element={<CheckoutFlow />}>
