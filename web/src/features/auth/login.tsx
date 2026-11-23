@@ -7,7 +7,7 @@ export function Login() {
   const { login } = useSession();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  return <section><h1>ログイン</h1>
+  return <section className="utility-page login-page"><h1>ログイン</h1>
     <form className="stack form" onSubmit={async (event) => {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
@@ -21,6 +21,6 @@ export function Login() {
       <button disabled={busy}>{busy ? '接続中…' : 'ログイン'}</button>
       {error && <p role="alert">{error}</p>}
     </form>
-    <p>演習用アカウント <code>customer@example.test</code> ／ <code>thread-customer</code></p>
+    <p className="demo-account">演習用アカウント<br /><code>customer@example.test</code> ／ <code>thread-customer</code></p>
   </section>;
 }

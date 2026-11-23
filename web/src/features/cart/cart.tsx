@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
+import { ProductVisual } from '../products/product-visual';
 import type { Product } from '../products/products';
 
 type Item = { productId: string; product: Product; quantity: number };
@@ -21,7 +22,7 @@ export function Cart() {
     });
     return () => controller.abort();
   }, [token, reload]);
-  if (!token) return <p><Link to="/login">ログイン</Link>してカートを確認してください。</p>;
+  if (!token) return <section className="utility-page"><h1>カート</h1><p><Link to="/login">ログイン</Link>してカートを確認してください。</p></section>;
 
   async function change(path: string, options: RequestInit, success?: string) {
     setBusy(true); setMessage('');
@@ -30,19 +31,19 @@ export function Cart() {
     finally { setBusy(false); }
   }
 
-  return <section><h1>カート</h1>
+  return <section className="utility-page"><h1>カート</h1>
     {message && <p role="status">{message}</p>}
     {!items && !message && <p role="status">読み込み中…</p>}
     {items?.length === 0 && <p>カートに商品がありません。 <Link to="/">買い物を続ける</Link></p>}
     {!!items?.length && <>
       {items.map(item => <div className="row" key={item.productId}>
-        <Link to={'/products/' + item.productId}>{item.product.name}</Link>
+        <Link className="cart-product" to={'/products/' + item.productId}><ProductVisual product={item.product} />{item.product.name}</Link>
         <span>{yen(item.product.price)}</span>
         <label>数量 <input className="quantity" type="number" min={1} max={99} value={item.quantity} disabled={busy}
           onChange={event => { const quantity = event.target.valueAsNumber; if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 99) void change('/cart/' + item.productId, { method: 'PUT', body: JSON.stringify({ quantity }) }); }} /></label>
         <button disabled={busy} onClick={() => void change('/cart/' + item.productId, { method: 'DELETE' })}>削除</button>
       </div>)}
-      <p>合計 <strong>{yen(items.reduce((sum, item) => sum + item.quantity * item.product.price, 0))}</strong></p>
+      <p className="cart-total">合計 <strong>{yen(items.reduce((sum, item) => sum + item.quantity * item.product.price, 0))}</strong></p>
       <button disabled={busy} onClick={() => void change('/orders', { method: 'POST' }, '注文が確定しました。')}>注文する</button>
     </>}
   </section>;

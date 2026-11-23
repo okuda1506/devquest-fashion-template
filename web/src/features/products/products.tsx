@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ArrowDownRight, ArrowLeft, ArrowUpRight, Search } from 'lucide-react';
+import campaignImage from '../../assets/campaign.webp';
+import { ProductVisual } from './product-visual';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
 
@@ -18,15 +21,13 @@ export function ProductCard({ product }: { product: Product }) {
   return <article className="product-card">
     <Link to={'/products/' + product.id}>
       <ProductVisual product={product} />
-      <span className="eyebrow">{categories[product.category]}</span>
-      <h2>{product.name}</h2>
-      <p>{yen(product.price)}</p>
+      <div className="product-caption">
+        <span className="product-category">{categories[product.category]}</span>
+        <h2>{product.name}</h2>
+        <p>{yen(product.price)}</p>
+      </div>
     </Link>
   </article>;
-}
-
-function ProductVisual({ product }: { product: Product }) {
-  return <div className={'product-visual ' + product.category} aria-hidden="true"><span>THREAD</span></div>;
 }
 
 export function Products() {
@@ -51,16 +52,35 @@ export function Products() {
   }, [query, attempt]);
 
   return <>
-    <section className="shop-hero"><span className="eyebrow">THREAD / 定番コレクション</span><h1>日々をつくる服。</h1><p>繰り返し着たくなる、素材とシルエット。</p></section>
-    <section aria-labelledby="collection"><h2 id="collection">商品一覧</h2>
-      <div className="filters">
-        <label>カテゴリー <select value={category} onChange={e => setCategory(e.target.value)}>
-          <option value="">すべて</option>{Object.entries(categories).map(([key, name]) => <option key={key} value={key}>{name}</option>)}
-        </select></label>
-        <label>商品名 <input value={query} onChange={e => setQuery(e.target.value)} placeholder="商品を検索" /></label>
-        <label>並び順 <select value={sort} onChange={e => setSort(e.target.value as Sort)}>
-          <option value="default">標準</option><option value="asc">価格が安い順</option><option value="desc">価格が高い順</option>
-        </select></label>
+    <section className="shop-hero" aria-labelledby="campaign-title">
+      <div className="hero-copy">
+        <p className="campaign-label">THREAD 定番コレクション</p>
+        <h1 id="campaign-title" lang="en">Daily <br />Uniform.</h1>
+        <p className="campaign-description">繰り返し着たくなる、素材とシルエット。</p>
+        <button className="collection-jump" onClick={() => {
+          const heading = document.getElementById('collection');
+          heading?.focus({ preventScroll: true });
+          heading?.scrollIntoView({ block: 'start' });
+        }}>商品を見る <ArrowDownRight size={17} aria-hidden="true" /></button>
+      </div>
+      <img className="campaign-photo" src={campaignImage} width={1536} height={1024} fetchPriority="high"
+        alt="コンクリートの壁を背景に、ジャケットとワイドパンツを着て歩くモデル" />
+    </section>
+    <section className="catalog" aria-labelledby="collection">
+      <div className="catalog-toolbar">
+        <div className="catalog-heading"><h2 id="collection" tabIndex={-1}>商品一覧</h2>
+          {state === 'ready' && <span>{products.length} 点</span>}
+        </div>
+        <div className="filters">
+          <label className="catalog-search"><Search size={15} aria-hidden="true" /><span className="sr-only">商品名</span>
+            <input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="商品を検索" /></label>
+          <label>カテゴリー <select value={category} onChange={e => setCategory(e.target.value)}>
+            <option value="">すべて</option>{Object.entries(categories).map(([key, name]) => <option key={key} value={key}>{name}</option>)}
+          </select></label>
+          <label>並び順 <select value={sort} onChange={e => setSort(e.target.value as Sort)}>
+            <option value="default">標準</option><option value="asc">価格が安い順</option><option value="desc">価格が高い順</option>
+          </select></label>
+        </div>
       </div>
       {state === 'loading' && <p role="status">商品を読み込み中…</p>}
       {state === 'error' && <p role="alert">商品を取得できませんでした。 <button onClick={() => setAttempt(n => n + 1)}>再試行</button></p>}
@@ -86,8 +106,12 @@ export function ProductDetail() {
   if (result.id !== id) return <p role="status">商品を読み込み中…</p>;
   if (!result.item) return <p role="alert">{result.error}</p>;
   const product = result.item;
-  return <div className="detail"><ProductVisual product={product} /><section>
-    <Link to="/">商品一覧へ</Link><h1>{product.name}</h1><p>{product.description}</p><strong>{yen(product.price)}</strong>
+  return <div className="product-page">
+    <Link className="back-link" to="/"><ArrowLeft size={15} aria-hidden="true" /> 商品一覧へ</Link>
+    <div className="detail"><ProductVisual product={product} detail /><section className="detail-copy">
+    <span className="product-category">{categories[product.category]}</span>
+    <h1>{product.name}</h1><strong className="detail-price">{yen(product.price)}</strong>
+    <p className="detail-description">{product.description}</p>
     <p>{product.stock > 0 ? `在庫 ${product.stock} 点` : '在庫切れ'}</p>
     {session ? <button type="button" disabled={!product.stock || busy} onClick={async () => {
       setBusy(true);
@@ -96,7 +120,7 @@ export function ProductDetail() {
         setMessage('カートに追加しました。');
       } catch (error) { setMessage((error as Error).message); }
       finally { setBusy(false); }
-    }}>カートに追加</button> : <Link to="/login">ログインして購入</Link>}
+    }}>カートに追加</button> : <Link className="action-link" to="/login">ログインして購入 <ArrowUpRight size={17} aria-hidden="true" /></Link>}
     <p role="status">{message}</p>
-  </section></div>;
+  </section></div></div>;
 }

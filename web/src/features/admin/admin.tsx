@@ -30,7 +30,7 @@ export function Admin() {
   }
 
   if (!token) return <p role="alert">管理者としてログインしてください。</p>;
-  return <section><h1>店舗管理</h1>{notice && <p role="status">{notice}</p>}
+  return <section className="utility-page"><h1>店舗管理</h1>{notice && <p role="status">{notice}</p>}
     <h2>商品・在庫</h2>
     {!products && !notice && <p role="status">読み込み中…</p>}
     {products?.map(product => <article className="row" key={product.id}>
