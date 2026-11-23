@@ -1,11 +1,12 @@
 import { categories, type Product } from '@thread/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowDownRight, ArrowLeft, ArrowUpRight, Search } from 'lucide-react';
+import { ArrowDownRight, ArrowLeft, ArrowRight, Check, Plus, Search, ShoppingBag } from 'lucide-react';
 import campaignImage from '../../assets/campaign.webp';
 import { ProductVisual } from './product-visual';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
+import { animateCartAddition } from '../cart/cart-animation';
 
 export type { Product } from '@thread/shared';
 export type Sort = 'default' | 'asc' | 'desc';
@@ -89,9 +90,10 @@ export function Products() {
   </>;
 }
 
-export function ProductDetail() {
+export function ProductDetail({ cartIcon }: { cartIcon: RefObject<HTMLSpanElement | null> }) {
   const { id } = useParams();
   const { session } = useSession();
+  const productImage = useRef<HTMLImageElement>(null);
   const [result, setResult] = useState<{ id?: string; item?: Product; error?: string }>({});
   useEffect(() => {
     const controller = new AbortController();
@@ -106,34 +108,63 @@ export function ProductDetail() {
   const product = result.item;
   return <div className="product-page">
     <Link className="back-link" to="/"><ArrowLeft size={15} aria-hidden="true" /> 商品一覧へ</Link>
-    <div className="detail"><ProductVisual product={product} detail /><section className="detail-copy">
-    <span className="product-category">{categories[product.category]}</span>
-    <h1>{product.name}</h1><strong className="detail-price">{yen(product.price)}</strong>
-    <p className="detail-description">{product.description}</p>
-    <p>{product.stock > 0 ? `在庫 ${product.stock} 点` : '在庫切れ'}</p>
-    {session ? <AddToCart key={product.id + ':' + session.token} product={product} token={session.token} />
-      : <Link className="action-link" to="/login">ログインして購入 <ArrowUpRight size={17} aria-hidden="true" /></Link>}
-  </section></div></div>;
+    <div className="detail">
+      <ProductVisual product={product} detail imageRef={productImage} />
+      <section className="detail-copy">
+        <span className="product-category">{categories[product.category]}</span>
+        <h1>{product.name}</h1><strong className="detail-price">{yen(product.price)}</strong>
+        <p className="detail-description">{product.description}</p>
+        <p>{product.stock > 0 ? `在庫 ${product.stock} 点` : '在庫切れ'}</p>
+        {session
+          ? <AddToCart key={product.id + ':' + session.token} product={product} token={session.token} cartIcon={cartIcon} productImage={productImage} />
+          : <Link className="action-link detail-add" to="/login"><ShoppingBag size={18} aria-hidden="true" /> ログインして購入 <ArrowRight size={17} aria-hidden="true" /></Link>}
+      </section>
+    </div>
+  </div>;
 }
 
-function AddToCart({ product, token }: { product: Product; token: string }) {
+function AddToCart({ product, token, cartIcon, productImage }: {
+  product: Product;
+  token: string;
+  cartIcon: RefObject<HTMLSpanElement | null>;
+  productImage: RefObject<HTMLImageElement | null>;
+}) {
   const [added, setAdded] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const stopAnimation = useRef<(() => void) | undefined>(undefined);
+
+  useEffect(() => () => stopAnimation.current?.(), []);
+
+  async function addToCart(button: HTMLButtonElement) {
+    stopAnimation.current?.();
+    setAdded(false);
+    setError('');
+    setBusy(true);
+    try {
+      await api('/cart/' + product.id, { method: 'PUT', body: '{"quantity":1}' }, token);
+      setAdded(true);
+    } catch (cause) {
+      setError((cause as Error).message);
+      return;
+    } finally {
+      setBusy(false);
+    }
+    if (cartIcon.current && button.isConnected) {
+      stopAnimation.current = animateCartAddition(cartIcon.current, productImage.current, button);
+    }
+  }
 
   return <div className="detail-actions">
-    <button type="button" disabled={!product.stock || busy} onClick={async () => {
-      setAdded(false);
-      setError('');
-      setBusy(true);
-      try {
-        await api('/cart/' + product.id, { method: 'PUT', body: '{"quantity":1}' }, token);
-        setAdded(true);
-      } catch (cause) { setError((cause as Error).message); }
-      finally { setBusy(false); }
-    }}>{busy ? '追加中…' : 'カートに追加'}</button>
-    <p role="status">{added ? 'カートに追加しました。' : ''}</p>
+    <button type="button" className="detail-add" disabled={!product.stock || busy} onClick={event => void addToCart(event.currentTarget)}>
+      <ShoppingBag size={18} aria-hidden="true" />
+      {busy ? '追加中…' : 'カートに追加'}
+      <Plus size={17} aria-hidden="true" />
+    </button>
+    <div className={added ? 'detail-cart-feedback is-added' : 'detail-cart-feedback'}>
+      <p role="status">{added && <><span className="detail-cart-check"><Check size={14} aria-hidden="true" /></span>カートに追加しました。</>}</p>
+      {added && <Link className="detail-cart-link" to="/cart">カートを見る <ArrowRight size={16} aria-hidden="true" /></Link>}
+    </div>
     {error && <p role="alert">{error}</p>}
-    {added && <Link className="action-link" to="/checkout">購入画面へ <ArrowUpRight size={17} aria-hidden="true" /></Link>}
   </div>;
 }
