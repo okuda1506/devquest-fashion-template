@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { orderLabels, yen, type Order } from '@thread/shared';
@@ -12,8 +12,10 @@ export type AdminOrder = Order & {
 export function ManageOrders() {
   const token = useOutletContext<string>();
   const data = useAdminList<AdminOrder>('/admin/orders', token);
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('all');
+  const [params] = useSearchParams();
+  const initialStatus = params.get('status');
+  const [query, setQuery] = useState(() => params.get('q') ?? '');
+  const [status, setStatus] = useState<string>(initialStatus === 'PLACED' || initialStatus === 'SHIPPED' ? initialStatus : 'all');
   const keyword = query.trim().toLowerCase();
   const visible = data.items.filter(order => {
     const searchText = [order.id, order.user.name, order.user.email].join(' ').toLowerCase();

@@ -1,4 +1,4 @@
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { categories, yen, type Product } from '@thread/shared';
@@ -68,7 +68,8 @@ export function ManageProducts({ inventory }: { inventory: boolean }) {
   const token = useOutletContext<string>();
   const data = useAdminList<Product>('/admin/products', token);
   const [editor, setEditor] = useState<Product | 'new' | null>(null);
-  const [query, setQuery] = useState('');
+  const [params] = useSearchParams();
+  const [query, setQuery] = useState(() => params.get('q') ?? '');
   const [stockFilter, setStockFilter] = useState('all');
   const keyword = query.trim().toLowerCase();
   const visible = data.items.filter(product => {
