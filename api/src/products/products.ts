@@ -2,7 +2,7 @@ import { Body, Controller, Get, Injectable, Module, NotFoundException, Param, Pa
 import { ApiBearerAuth, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { Db } from '../db';
 import { AdminOnly, AuthGuard, AuthModule } from '../auth/auth';
 

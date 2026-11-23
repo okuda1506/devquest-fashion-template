@@ -1,7 +1,7 @@
 import { BadRequestException, Body, ConflictException, Controller, Get, Injectable, Module, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { OrderStatus, Prisma } from '@prisma/client';
+import { OrderStatus, Prisma } from '../generated/prisma/client';
 import { AdminOnly, AuthGuard, AuthModule, CurrentUser } from '../auth/auth';
 import { Db } from '../db';
 

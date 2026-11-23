@@ -2,7 +2,9 @@ name: THREAD 課題採点
 
 on:
   push:
-    branches: ['task/DEV-*']
+    branches: ['main', 'task/DEV-*']
+  pull_request:
+    branches: ['main']
 
 permissions:
   contents: read
@@ -35,6 +37,7 @@ jobs:
         with:
           persist-credentials: false
       - name: 指定ブランチと採点ファイルを照合
+        if: github.event_name == 'push' && startsWith(github.ref_name, 'task/')
         shell: bash
         run: |
           case "$GITHUB_REF_NAME" in
@@ -42,7 +45,7 @@ jobs:
             *) echo '対象の課題ブランチが存在しません。'; exit 1 ;;
           esac
           git fetch --depth=1 https://github.com/okuda1506/devquest-fashion-template.git main
-          git diff --exit-code FETCH_HEAD "$GITHUB_SHA" -- .github/workflows grading package.json package-lock.json eslint.config.js .npmrc api/.npmrc web/.npmrc api/package.json api/jest.config.cjs api/tsconfig.json api/tsconfig.build.json web/package.json web/vite.config.ts web/tsconfig.json web/src/test-setup.ts ':(glob)**/*.test.ts' ':(glob)**/*.test.tsx'
+          git diff --exit-code FETCH_HEAD "$GITHUB_SHA" -- .github/workflows grading package.json package-lock.json eslint.config.js .npmrc api/.npmrc web/.npmrc api/package.json api/prisma.config.ts api/prisma/seed.ts api/jest.config.cjs api/tsconfig.json api/tsconfig.build.json web/package.json web/vite.config.ts web/tsconfig.json web/src/test-setup.ts ':(glob)**/*.test.ts' ':(glob)**/*.test.tsx'
       - name: Node.js をセットアップ
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -59,5 +62,7 @@ jobs:
           npm run typecheck
           npm run lint
           npm test
+          npm run build
       - name: 課題テスト
+        if: github.event_name == 'push' && startsWith(github.ref_name, 'task/')
         run: npm run grade -- "$GITHUB_REF_NAME"

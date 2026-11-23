@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { Db } from '../src/db';
 import { hashPassword } from '../src/auth/password';
 
-const db = new PrismaClient();
+const db = new Db();
 const products = [
   { id: 'linen-shirt', name: 'リネンブレンドシャツ', category: 'tops', description: '軽く風を通す、ゆとりのある一枚。', price: 6800, stock: 14 },
   { id: 'cotton-tee', name: 'ヘビーコットン T シャツ', category: 'tops', description: '丈夫で透けにくいコットン素材。', price: 2900, stock: 0 },
