@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
 import { ProductVisual } from '../products/product-visual';
-import type { CartItem } from '@thread/shared';
 import { CheckoutPage } from '../checkout/checkout-layout';
+import { useCart } from './cart-state';
 
 export function Cart() {
   const { session, checking } = useSession();
@@ -14,23 +14,12 @@ export function Cart() {
 }
 
 function CartContents({ token }: { token: string }) {
-  const [items, setItems] = useState<CartItem[] | null>(null);
+  const { items, loading, loadError, refresh } = useCart();
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  const [reload, setReload] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  useEffect(() => {
-    const controller = new AbortController();
-    void api<CartItem[]>('/cart', { signal: controller.signal }, token).then(
-      result => { if (!controller.signal.aborted) { setItems(result); setLoading(false); } },
-      (cause: Error) => { if (!controller.signal.aborted) { setLoadError(cause.message); setLoading(false); } },
-    );
-    return () => controller.abort();
-  }, [token, reload]);
   async function change(path: string, options: RequestInit) {
     setBusy(true); setMessage('');
-    try { await api(path, options, token); setLoading(true); setReload(n => n + 1); }
+    try { await api(path, options, token); refresh(); }
     catch (error) { setMessage((error as Error).message); }
     finally { setBusy(false); }
   }
@@ -39,7 +28,7 @@ function CartContents({ token }: { token: string }) {
     {message && <p role="alert">{message}</p>}
     {loading && <p role="status">読み込み中…</p>}
     {loadError && <div><p role="alert">{loadError}</p>
-      <button onClick={() => { setLoadError(''); setLoading(true); setReload(n => n + 1); }}>再試行</button></div>}
+      <button onClick={refresh}>再試行</button></div>}
     {!loadError && items?.length === 0 && <p>カートに商品がありません。 <Link to="/">買い物を続ける</Link></p>}
     {!loadError && !!items?.length && <>
       {items.map(item => <div className="row" key={item.productId}>

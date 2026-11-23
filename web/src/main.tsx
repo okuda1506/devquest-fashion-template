@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Link, NavLink, Route, Routes, useMatch } from 'react-router-dom';
 import { Cart } from './features/cart/cart';
+import { CartProvider, useCart } from './features/cart/cart-state';
 import { CheckoutAddress, CheckoutComplete, CheckoutConfirm, CheckoutFlow } from './features/checkout/checkout';
 import { Login } from './features/auth/login';
 import { SessionProvider, useSession } from './features/auth/session';
@@ -12,6 +13,8 @@ import './styles.css';
 
 function Shop() {
   const { session, logout } = useSession();
+  const { items } = useCart();
+  const cartQuantity = items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const cartIcon = useRef<HTMLSpanElement>(null);
   const detailPage = useMatch('/products/:id');
   return <>
@@ -24,7 +27,13 @@ function Shop() {
         <NavLink to="/orders" aria-label="注文履歴"><ClipboardList aria-hidden="true" /><span>注文履歴</span></NavLink>
         {session ? <button onClick={logout} aria-label="ログアウト"><LogOut aria-hidden="true" /><span>ログアウト</span></button>
           : <NavLink to="/login" aria-label="ログイン"><UserRound aria-hidden="true" /><span>ログイン</span></NavLink>}
-        <NavLink to="/cart" aria-label="カート"><span ref={cartIcon} className="header-cart-icon" aria-hidden="true"><ShoppingBag /></span><span>カート</span></NavLink>
+        <NavLink to="/cart" aria-label={cartQuantity > 0 ? `カート（${cartQuantity}点）` : 'カート'}>
+          <span ref={cartIcon} className="header-cart-icon" aria-hidden="true">
+            <ShoppingBag />
+            {cartQuantity > 0 && <span className="header-cart-quantity">+{cartQuantity}</span>}
+          </span>
+          <span>カート</span>
+        </NavLink>
       </nav>
     </div></header>
     <main><Routes>
@@ -41,4 +50,6 @@ function Shop() {
     <footer><div><Link to="/" className="wordmark" aria-label="THREAD ホーム">THREAD.</Link><span>演習用アパレルストア</span></div></footer>
   </>;
 }
-createRoot(document.getElementById('root')!).render(<HashRouter><SessionProvider app="store"><Shop /></SessionProvider></HashRouter>);
+createRoot(document.getElementById('root')!).render(
+  <HashRouter><SessionProvider app="store"><CartProvider><Shop /></CartProvider></SessionProvider></HashRouter>,
+);

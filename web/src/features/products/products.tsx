@@ -7,6 +7,7 @@ import { ProductVisual } from './product-visual';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
 import { animateCartAddition } from '../cart/cart-animation';
+import { useCart } from '../cart/cart-state';
 
 export type { Product } from '@thread/shared';
 export type Sort = 'default' | 'asc' | 'desc';
@@ -129,6 +130,7 @@ function AddToCart({ product, token, cartIcon, productImage }: {
   cartIcon: RefObject<HTMLSpanElement | null>;
   productImage: RefObject<HTMLImageElement | null>;
 }) {
+  const { refresh } = useCart();
   const [added, setAdded] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -143,6 +145,7 @@ function AddToCart({ product, token, cartIcon, productImage }: {
     setBusy(true);
     try {
       await api('/cart/' + product.id, { method: 'PUT', body: '{"quantity":1}' }, token);
+      refresh();
       setAdded(true);
     } catch (cause) {
       setError((cause as Error).message);

@@ -1,9 +1,10 @@
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, Outlet, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { orderLabels, type CartItem, type Order, type ShippingAddress } from '@thread/shared';
+import { orderLabels, type Order, type ShippingAddress } from '@thread/shared';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
+import { useCart } from '../cart/cart-state';
 import { CheckoutPage } from './checkout-layout';
 import './checkout.css';
 
@@ -65,21 +66,10 @@ function DeliveryDetails({ address }: { address: ShippingAddress }) {
 
 export function CheckoutAddress() {
   const { token, address, setAddress, setReview } = useOutletContext<CheckoutContext>();
-  const [cart, setCart] = useState<CartItem[]>();
-  const [loadError, setLoadError] = useState('');
+  const { items: cart, loadError, refresh } = useCart();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [attempt, setAttempt] = useState(0);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const abort = new AbortController();
-    void api<CartItem[]>('/cart', { signal: abort.signal }, token).then(
-      result => { if (!abort.signal.aborted) setCart(result); },
-      (cause: Error) => { if (!abort.signal.aborted) setLoadError(cause.message); },
-    );
-    return () => abort.abort();
-  }, [token, attempt]);
 
   const items = (cart ?? []).map(({ product, quantity }) => ({
     productId: product.id, name: product.name, unitPrice: product.price, quantity,
@@ -118,7 +108,7 @@ export function CheckoutAddress() {
   return <CheckoutPage step={1} title="配送先を入力">
     <Link className="back-link" to="/cart"><ArrowLeft size={15} aria-hidden="true" /> カートへ戻る</Link>
     {loadError ? <div><p role="alert">{loadError}</p>
-      <button onClick={() => { setLoadError(''); setAttempt(current => current + 1); }}>再試行</button></div>
+      <button onClick={refresh}>再試行</button></div>
       : !cart ? <p role="status">カートを読み込み中…</p>
       : !cart.length ? <p>カートに商品がありません。 <Link to="/">買い物を続ける</Link></p>
       : <div className="checkout-grid">
@@ -152,6 +142,7 @@ export function CheckoutAddress() {
 
 export function CheckoutConfirm() {
   const { token, review } = useOutletContext<CheckoutContext>();
+  const { refresh } = useCart();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const sending = useRef(false);
@@ -170,6 +161,7 @@ export function CheckoutConfirm() {
       const order = await api<Order>('/orders', {
         method: 'POST', body: JSON.stringify({ checkoutId, version, shippingAddress }),
       }, token);
+      refresh();
       navigate('/checkout/complete/' + encodeURIComponent(order.id), { replace: true });
     } catch (cause) {
       setError((cause as Error).message);
