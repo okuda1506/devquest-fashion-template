@@ -4,10 +4,11 @@ import { useSession } from './session';
 
 export function Login() {
   const navigate = useNavigate();
-  const { login } = useSession();
+  const { login, notice } = useSession();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  return <section className="utility-page login-page"><h1>ログイン</h1>
+  return <section className="utility-page login-page"><h1>お客様ログイン</h1>
+    {notice && <p role="status">{notice}</p>}
     <form className="stack form" onSubmit={async (event) => {
       event.preventDefault();
       const data = new FormData(event.currentTarget);

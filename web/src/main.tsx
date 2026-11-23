@@ -4,7 +4,6 @@ import { HashRouter, Link, NavLink, Route, Routes } from 'react-router-dom';
 import { Cart } from './features/cart/cart';
 import { Login } from './features/auth/login';
 import { SessionProvider, useSession } from './features/auth/session';
-import { Admin } from './features/admin/admin';
 import { Orders } from './features/orders/orders';
 import { ProductDetail, Products } from './features/products/products';
 import './styles.css';
@@ -16,7 +15,6 @@ function Shop() {
       <Link to="/" className="wordmark" aria-label="THREAD ホーム">THREAD.</Link>
       <nav className="store-nav" aria-label="ストア">
         <NavLink to="/" end>商品一覧</NavLink>
-        {session?.role === 'ADMIN' && <NavLink to="/admin">店舗管理</NavLink>}
       </nav>
       <nav className="account-nav" aria-label="アカウント">
         <NavLink to="/orders" aria-label="注文履歴"><ClipboardList aria-hidden="true" /><span>注文履歴</span></NavLink>
@@ -28,10 +26,10 @@ function Shop() {
     <main><Routes>
       <Route index element={<Products />} /><Route path="/products/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<Cart />} /><Route path="/orders" element={<Orders />} />
-      <Route path="/login" element={<Login />} /><Route path="/admin" element={<Admin />} />
+      <Route path="/login" element={<Login />} />
       <Route path="*" element={<p>ページが見つかりません。 <Link to="/">商品一覧へ</Link></p>} />
     </Routes></main>
     <footer><div><Link to="/" className="wordmark" aria-label="THREAD ホーム">THREAD.</Link><span>演習用アパレルストア</span></div></footer>
   </>;
 }
-createRoot(document.getElementById('root')!).render(<HashRouter><SessionProvider><Shop /></SessionProvider></HashRouter>);
+createRoot(document.getElementById('root')!).render(<HashRouter><SessionProvider app="store"><Shop /></SessionProvider></HashRouter>);

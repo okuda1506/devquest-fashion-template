@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../api';
+import { api } from '@thread/shared';
 
 export function useAdminList<T>(endpoint: string, token: string) {
   const [items, setItems] = useState<T[]>([]);

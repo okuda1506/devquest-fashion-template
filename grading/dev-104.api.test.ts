@@ -31,7 +31,7 @@ test('DEV-104: 公開向け絞り込み・件数・ページ分割から非公�
 test('DEV-104: 非公開商品は管理者だけが一覧で確認できる', async () => {
   const server = app.getHttpServer();
   await request(server).get('/api/admin/products').expect(401);
-  const { body } = await request(server).post('/api/auth/login').send({ email: 'admin@example.test', password: 'thread-admin' }).expect(201);
+  const { body } = await request(server).post('/api/auth/admin/login').send({ email: 'admin@example.test', password: 'thread-admin' }).expect(201);
   const admin = await request(server).get('/api/admin/products').auth(body.token, { type: 'bearer' }).expect(200);
   expect(admin.body.map((item: { id: string }) => item.id)).toContain('draft-coat');
 });

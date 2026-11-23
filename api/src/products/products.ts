@@ -5,7 +5,7 @@ import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 import { Prisma } from '../generated/prisma/client';
 import { Db } from '../db';
-import { AdminOnly, AuthGuard, AuthModule } from '../auth/auth';
+import { RequireRole, AuthGuard, AuthModule } from '../auth/auth';
 
 export const categories = ['tops', 'outerwear', 'bottoms', 'accessories'] as const;
 class ProductQuery {
@@ -81,7 +81,7 @@ class ProductsController {
 
 @ApiTags('管理・商品')
 @ApiBearerAuth()
-@AdminOnly()
+@RequireRole('ADMIN')
 @UseGuards(AuthGuard)
 @Controller('admin/products')
 class AdminProductsController {

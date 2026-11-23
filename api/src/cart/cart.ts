@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Injectable, Module, NotFoundException, P
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsInt, Max, Min } from 'class-validator';
 import { Db } from '../db';
-import { AuthGuard, AuthModule, CurrentUser } from '../auth/auth';
+import { AuthGuard, AuthModule, CurrentUser, RequireRole } from '../auth/auth';
 
 class QuantityDto {
   @ApiProperty() @IsInt() @Min(1) @Max(99) quantity!: number;
@@ -35,6 +35,7 @@ class CartService {
 @ApiTags('カート')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
+@RequireRole('CUSTOMER')
 @Controller('cart')
 class CartController {
   constructor(private readonly cart: CartService) {}

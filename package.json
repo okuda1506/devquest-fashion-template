@@ -4,18 +4,23 @@
   "type": "module",
   "workspaces": [
     "web",
-    "api"
+    "admin",
+    "api",
+    "packages/shared"
   ],
   "scripts": {
-    "dev": "concurrently -k -n EC,API \"npm run dev -w web\" \"npm run dev -w api\"",
+    "dev": "concurrently -k -n EC,\u7ba1\u7406,API \"npm run dev:store\" \"npm run dev:admin\" \"npm run dev:api\"",
     "db:generate": "npm run db:generate -w api",
     "db:migrate": "npm run db:migrate -w api",
     "db:seed": "npm run db:seed -w api",
-    "typecheck": "npm run typecheck --workspaces",
-    "build": "npm run build --workspaces",
-    "lint": "eslint web/src web/vite.config.ts api/src api/prisma api/prisma.config.ts grading",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "eslint web/src web/vite.config.ts admin/src admin/vite.config.ts packages/shared/src api/src api/prisma api/prisma.config.ts grading",
     "test": "npm run test -w web && npm run test -w api",
-    "grade": "node grading/grade.mjs"
+    "grade": "node grading/grade.mjs",
+    "dev:store": "npm run dev -w web",
+    "dev:admin": "npm run dev -w admin",
+    "dev:api": "npm run dev -w api"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

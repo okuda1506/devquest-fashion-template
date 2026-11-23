@@ -2,7 +2,7 @@ import { BadRequestException, Body, ConflictException, Controller, Get, Injectab
 import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { OrderStatus, Prisma } from '../generated/prisma/client';
-import { AdminOnly, AuthGuard, AuthModule, CurrentUser } from '../auth/auth';
+import { RequireRole, AuthGuard, AuthModule, CurrentUser } from '../auth/auth';
 import { Db } from '../db';
 
 class StatusDto {
@@ -68,6 +68,7 @@ class OrdersService {
 @ApiTags('注文')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
+@RequireRole('CUSTOMER')
 @Controller('orders')
 class OrdersController {
   constructor(private readonly orders: OrdersService) {}
@@ -77,7 +78,7 @@ class OrdersController {
 
 @ApiTags('管理・注文')
 @ApiBearerAuth()
-@AdminOnly()
+@RequireRole('ADMIN')
 @UseGuards(AuthGuard)
 @Controller('admin/orders')
 class AdminOrdersController {

@@ -1,17 +1,16 @@
+import { useOutletContext } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { yen } from '../../api';
-import { orderLabels, type Order } from '../orders/orders';
+import { orderLabels, yen, type Order } from '@thread/shared';
 import { AdminFeedback } from './admin-feedback';
 import { useAdminList } from './admin-data';
 
-type OrderItem = Order['items'][number] & { unitPrice: number };
-type AdminOrder = Omit<Order, 'items'> & {
+export type AdminOrder = Order & {
   user: { name: string; email: string };
-  items: OrderItem[];
 };
 
-export function ManageOrders({ token }: { token: string }) {
+export function ManageOrders() {
+  const token = useOutletContext<string>();
   const data = useAdminList<AdminOrder>('/admin/orders', token);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('all');
@@ -23,7 +22,7 @@ export function ManageOrders({ token }: { token: string }) {
   const locked = data.loading || data.saving;
 
   return <section aria-labelledby="admin-orders-title">
-    <h2 id="admin-orders-title">受注一覧</h2>
+    <h1 id="admin-orders-title">受注管理</h1>
     <div className="admin-toolbar">
       <label>受注を検索<input type="search" placeholder="注文番号・購入者名・メールアドレス"
         value={query} onChange={event => setQuery(event.target.value)} /></label>
@@ -44,7 +43,7 @@ export function ManageOrders({ token }: { token: string }) {
         <summary>
           <span><strong>{order.user.name}</strong><small className="admin-mono">{order.id}</small></span>
           <time dateTime={order.createdAt}>{new Date(order.createdAt).toLocaleString('ja-JP')}</time>
-          <span className="order-status">{orderLabels[order.status]}</span>
+          <span className={'badge ' + (order.status === 'SHIPPED' ? 'positive' : '')}>{orderLabels[order.status]}</span>
           <strong>{yen(order.total)}</strong>
         </summary>
         <div className="admin-receipt">

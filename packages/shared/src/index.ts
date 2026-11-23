@@ -1,0 +1,42 @@
+export type Product = {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  price: number;
+  stock: number;
+  isPublished: boolean;
+};
+export const categories: Record<string, string> = {
+  tops: 'トップス', outerwear: 'アウター', bottoms: 'ボトムス', accessories: '小物',
+};
+
+export const orderLabels = { PLACED: '注文受付済み', SHIPPED: '発送済み' };
+export type Order = {
+  id: string;
+  status: keyof typeof orderLabels;
+  total: number;
+  createdAt: string;
+  items: { id: string; name: string; quantity: number; unitPrice: number }[];
+};
+
+export const yen = (price: number) => new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(price);
+
+export const rejectedSessions = new EventTarget();
+
+export async function api<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (options.body) headers.set('Content-Type', 'application/json');
+  if (token) headers.set('Authorization', 'Bearer ' + token);
+  const response = await fetch('/api' + path, { ...options, headers }).catch(() => {
+    throw new Error('API に接続できませんでした。');
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    if (token && (response.status === 401 || response.status === 403)) {
+      rejectedSessions.dispatchEvent(new CustomEvent('rejected', { detail: token }));
+    }
+    throw new Error(typeof body?.message === 'string' ? body.message : '処理に失敗しました。');
+  }
+  return body as T;
+}

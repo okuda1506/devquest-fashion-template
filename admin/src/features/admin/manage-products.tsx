@@ -1,8 +1,7 @@
+import { useOutletContext } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { yen } from '../../api';
-import { ProductVisual } from '../products/product-visual';
-import { categories, type Product } from '../products/products';
+import { categories, yen, type Product } from '@thread/shared';
 import { AdminFeedback } from './admin-feedback';
 import { useAdminList } from './admin-data';
 
@@ -65,7 +64,8 @@ function ProductForm({ product, busy, close, save }: {
   </form>;
 }
 
-export function ManageProducts({ token, inventory }: { token: string; inventory: boolean }) {
+export function ManageProducts({ inventory }: { inventory: boolean }) {
+  const token = useOutletContext<string>();
   const data = useAdminList<Product>('/admin/products', token);
   const [editor, setEditor] = useState<Product | 'new' | null>(null);
   const [query, setQuery] = useState('');
@@ -105,7 +105,7 @@ export function ManageProducts({ token, inventory }: { token: string; inventory:
   }
 
   return <section aria-labelledby="admin-products-title">
-    <h2 id="admin-products-title">{inventory ? '在庫一覧' : '商品一覧'}</h2>
+    <h1 id="admin-products-title">{inventory ? '在庫管理' : '商品管理'}</h1>
     <div className="admin-toolbar">
       <label>商品を検索<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="商品名・商品ID・カテゴリー" /></label>
       {inventory && <label>在庫状況<select value={stockFilter} onChange={event => setStockFilter(event.target.value)}>
@@ -124,24 +124,24 @@ export function ManageProducts({ token, inventory }: { token: string; inventory:
       save={saveProduct} busy={locked} close={() => setEditor(null)} />}
     <AdminFeedback {...data} />
     {!data.loading && !data.loadError && !visible.length && <p>該当する商品はありません。</p>}
-    {!!visible.length && <ul className="admin-list">
-      {visible.map(product => <li key={product.id} className="admin-item">
-        <div className="admin-product">
-          <ProductVisual product={product} />
-          <div><h3>{product.name}</h3>
-            <p>{categories[product.category]} · {yen(product.price)} · {product.isPublished ? '公開' : '非公開'}</p>
-            <p className="admin-mono">{product.id}</p>
-          </div>
-        </div>
-        {inventory ? <>
-          <span className={product.stock === 0 ? 'admin-stock-out' : ''}>{product.stock === 0 ? '在庫切れ' : `現在 ${product.stock} 点`}</span>
-          <form className="stock-editor" key={product.stock} onSubmit={event => updateStock(event, product)}>
-            <label>在庫数 <input name="stock" className="quantity" type="number" min={0} max={100000}
-              defaultValue={product.stock} disabled={locked} required /></label>
+    {!!visible.length && <div className="table-scroll" role="region" aria-label={inventory ? '在庫一覧' : '商品一覧'} tabIndex={0}>
+      <table className="admin-table">
+        <thead><tr>
+          <th scope="col">商品</th><th scope="col">カテゴリー</th><th scope="col">価格</th><th scope="col">公開状態</th>
+          {inventory && <th scope="col">現在の在庫</th>}<th scope="col">操作</th>
+        </tr></thead>
+        <tbody>{visible.map(product => <tr key={product.id}>
+          <th scope="row">{product.name}<small className="admin-mono">{product.id}</small></th>
+          <td>{categories[product.category]}</td><td>{yen(product.price)}</td>
+          <td><span className={'badge ' + (product.isPublished ? 'positive' : '')}>{product.isPublished ? '公開' : '非公開'}</span></td>
+          {inventory && <td>{product.stock === 0 ? <span className="badge warning">在庫切れ</span> : `${product.stock} 点`}</td>}
+          <td>{inventory ? <form className="stock-editor" key={product.stock} onSubmit={event => updateStock(event, product)}>
+            <input name="stock" aria-label={product.name + 'の在庫数'} type="number" min={0} max={100000}
+              defaultValue={product.stock} disabled={locked} required />
             <button className="admin-secondary" disabled={locked}>保存</button>
-          </form>
-        </> : <button type="button" className="admin-secondary" disabled={locked} onClick={() => setEditor(product)}>編集</button>}
-      </li>)}
-    </ul>}
+          </form> : <button type="button" className="admin-secondary" disabled={locked} onClick={() => setEditor(product)}>編集</button>}</td>
+        </tr>)}</tbody>
+      </table>
+    </div>}
   </section>;
 }

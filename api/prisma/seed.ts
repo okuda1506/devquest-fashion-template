@@ -13,11 +13,13 @@ const products = [
 
 async function seed() {
   for (const product of products) await db.product.upsert({ where: { id: product.id }, create: product, update: {} });
+  // 既存アカウントを変更せず、EC サイト専用の顧客を初期登録する。
   const customer = await db.user.upsert({
     where: { email: 'customer@example.test' },
     create: { email: 'customer@example.test', name: '山田 花子', passwordHash: hashPassword('thread-customer') },
     update: {},
   });
+  // 管理画面専用の運営アカウント。
   await db.user.upsert({
     where: { email: 'admin@example.test' },
     create: { email: 'admin@example.test', name: '店舗管理者', passwordHash: hashPassword('thread-admin'), role: 'ADMIN' },

@@ -2,7 +2,7 @@ import { Body, ConflictException, Controller, Injectable, Module, NotFoundExcept
 import { ApiBearerAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { IsInt, Max, Min, ValidateIf } from 'class-validator';
 import { Db } from '../db';
-import { AdminOnly, AuthGuard, AuthModule } from '../auth/auth';
+import { RequireRole, AuthGuard, AuthModule } from '../auth/auth';
 
 class UpdateStock {
   @ApiProperty() @IsInt() @Min(0) @Max(100000) stock!: number;
@@ -32,7 +32,7 @@ class InventoryService {
 
 @ApiTags('管理・在庫')
 @ApiBearerAuth()
-@AdminOnly()
+@RequireRole('ADMIN')
 @UseGuards(AuthGuard)
 @Controller('admin/inventory')
 class InventoryController {

@@ -1,10 +1,8 @@
+import { orderLabels, type Order } from '@thread/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
-
-export type Order = { id: string; status: 'PLACED' | 'SHIPPED'; total: number; createdAt: string; items: { id: string; name: string; quantity: number }[] };
-export const orderLabels = { PLACED: '注文受付済み', SHIPPED: '発送済み' };
 
 export function Orders() {
   const token = useSession().session?.token;

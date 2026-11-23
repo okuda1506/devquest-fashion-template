@@ -1,3 +1,4 @@
+import { categories, type Product } from '@thread/shared';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowDownRight, ArrowLeft, ArrowUpRight, Search } from 'lucide-react';
@@ -6,8 +7,7 @@ import { ProductVisual } from './product-visual';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
 
-export type Product = { id: string; name: string; category: string; description: string; price: number; stock: number; isPublished: boolean };
-export const categories: Record<string, string> = { tops: 'トップス', outerwear: 'アウター', bottoms: 'ボトムス', accessories: '小物' };
+export type { Product } from '@thread/shared';
 export type Sort = 'default' | 'asc' | 'desc';
 
 export function sortProducts(products: Product[], sort: Sort) {

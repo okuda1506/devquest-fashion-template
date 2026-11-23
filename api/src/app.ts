@@ -1,6 +1,7 @@
 import { BadRequestException, INestApplication, Module, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AuthModule } from './auth/auth';
+import { allowedOrigins } from './auth/origins';
 import { CartModule } from './cart/cart';
 import { DbModule } from './db';
 import { InventoryModule } from './inventory/inventory';
@@ -12,6 +13,11 @@ export class AppModule {}
 
 export function configure(app: INestApplication) {
   app.setGlobalPrefix('api');
+  app.enableCors({
+    origin: [...allowedOrigins('store'), ...allowedOrigins('admin')],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Authorization', 'Content-Type'],
+  });
   app.useGlobalPipes(new ValidationPipe({
     transform: true, whitelist: true, forbidNonWhitelisted: true,
     exceptionFactory: () => new BadRequestException('入力内容が正しくありません。'),

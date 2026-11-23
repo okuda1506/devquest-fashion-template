@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule, configure } from './app';
@@ -29,8 +30,8 @@ beforeAll(async () => {
     create: { email, name: 'API テスト用ユーザー', passwordHash: hashPassword('thread-check') },
   });
   id = user.id;
-  shopper = (await request(app.getHttpServer()).post('/api/auth/login').send({ email, password: 'thread-check' }).expect(201)).body.token;
-  admin = (await request(app.getHttpServer()).post('/api/auth/login').send({ email: 'admin@example.test', password: 'thread-admin' }).expect(201)).body.token;
+  shopper = (await request(app.getHttpServer()).post('/api/auth/store/login').send({ email, password: 'thread-check' }).expect(201)).body.token;
+  admin = (await request(app.getHttpServer()).post('/api/auth/admin/login').send({ email: 'admin@example.test', password: 'thread-admin' }).expect(201)).body.token;
 });
 
 afterAll(async () => {
@@ -72,4 +73,45 @@ test('商品・在庫・注文の管理操作を管理者だけに許可する',
   await request(server).patch('/api/admin/inventory/' + sku).auth(admin, { type: 'bearer' }).send({ stock: -1 }).expect(400);
   await request(server).patch('/api/admin/inventory/' + sku).auth(admin, { type: 'bearer' }).send({ stock: 7 }).expect(200);
   await request(server).get('/api/admin/orders').auth(admin, { type: 'bearer' }).expect(200);
+});
+
+test('ログイン先・アカウントのロール・接続元が一致しない認証を拒否する', async () => {
+  const server = app.getHttpServer();
+  const customer = { email, password: 'thread-check' };
+  const operator = { email: 'admin@example.test', password: 'thread-admin' };
+  const counterpart = await request(server).post('/api/auth/admin/login').send(customer).expect(401);
+  const wrongPassword = await request(server).post('/api/auth/admin/login').send({ ...operator, password: 'wrong' }).expect(401);
+  const unknown = await request(server).post('/api/auth/admin/login').send({ ...operator, email: 'unknown@example.test' }).expect(401);
+  expect(counterpart.body).toEqual(wrongPassword.body);
+  expect(counterpart.body).toEqual(unknown.body);
+  expect(counterpart.body.token).toBeUndefined();
+  await request(server).post('/api/auth/store/login').send(operator).expect(401);
+  await request(server).post('/api/auth/admin/login').set('Origin', 'http://localhost:5174').send(operator).expect(401);
+  await request(server).post('/api/auth/store/login').set('Origin', 'http://localhost:5175').send(customer).expect(401);
+  await request(server).post('/api/auth/store/login').set('Origin', 'http://localhost:5174').send(customer).expect(201);
+  await request(server).post('/api/auth/admin/login').set('Origin', 'http://localhost:5175').send(operator).expect(201);
+});
+
+test('用途の異なるセッション、期限切れトークン、無許可オリジンを受け付けない', async () => {
+  const server = app.getHttpServer();
+  await request(server).get('/api/auth/store/session').auth(shopper, { type: 'bearer' }).expect(200);
+  await request(server).get('/api/auth/admin/session').auth(admin, { type: 'bearer' }).expect(200);
+  await request(server).get('/api/auth/admin/session').auth(shopper, { type: 'bearer' }).expect(403);
+  await request(server).get('/api/auth/store/session').auth(admin, { type: 'bearer' }).expect(403);
+  await request(server).get('/api/admin/orders').expect(401);
+  await request(server).get('/api/admin/orders').auth(shopper, { type: 'bearer' }).expect(403);
+  await request(server).get('/api/cart').auth(admin, { type: 'bearer' }).expect(403);
+  await request(server).post('/api/orders').auth(admin, { type: 'bearer' }).expect(403);
+  await request(server).get('/api/admin/orders').set('Origin', 'http://localhost:5174').auth(admin, { type: 'bearer' }).expect(403);
+  const jwt = app.get(JwtService);
+  const expired = jwt.sign({ sub: id, exp: Math.floor(Date.now() / 1000) - 10 }, { issuer: 'thread-api', audience: 'thread-store' });
+  const incorrectAudience = jwt.sign({ sub: id }, { issuer: 'thread-api', audience: 'thread-admin', expiresIn: '1m' });
+  const legacy = jwt.sign({ sub: id }, { expiresIn: '1m' });
+  for (const token of [expired, incorrectAudience, legacy, 'invalid']) {
+    await request(server).get('/api/cart').auth(token, { type: 'bearer' }).expect(401);
+  }
+  await request(server).options('/api/admin/orders').set('Origin', 'http://localhost:5175')
+    .set('Access-Control-Request-Method', 'GET').expect(204).expect('Access-Control-Allow-Origin', 'http://localhost:5175');
+  const other = await request(server).get('/api/products').set('Origin', 'http://localhost:9999').expect(200);
+  expect(other.headers['access-control-allow-origin']).toBeUndefined();
 });
