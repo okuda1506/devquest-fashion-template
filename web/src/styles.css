@@ -55,7 +55,7 @@ input::placeholder { color: #666; }
 main { min-height: 74vh; }
 .store-home { width: 100%; padding-inline: 0; }
 .shop-hero {
-  position: relative; isolation: isolate;
+  position: relative; isolation: isolate; overflow: hidden;
   display: grid; align-items: center; min-height: clamp(460px, 48vw, 840px);
   margin-bottom: clamp(38px, 5vw, 78px); background: #373735; color: white;
 }
@@ -69,6 +69,7 @@ main { min-height: 74vh; }
   margin: 0; font: 500 clamp(68px, 7.25vw, 124px)/.89 "Helvetica Neue", Arial, sans-serif;
   letter-spacing: -.08em;
 }
+.hero-copy h1 span { display: inline-block; }
 .campaign-description { margin: clamp(16px, 2vw, 26px) 0 0; font-size: 14px; line-height: 1.8; }
 .collection-jump {
   justify-content: space-between; gap: 20px; min-height: 44px; margin-top: clamp(16px, 2vw, 27px); padding: 8px 14px;
@@ -209,12 +210,38 @@ footer span { font-size: 12px; color: var(--subtle); }
   .row { gap: 10px; }
 }
 @media (prefers-reduced-motion: no-preference) {
+  .campaign-photo[data-loaded] { animation: campaign-photo-enter 1.15s cubic-bezier(.2, .65, .25, 1); }
+  .campaign-label { animation: campaign-copy-enter .54s ease-out .08s backwards; }
+  .hero-copy h1 span { animation: campaign-title-enter .76s cubic-bezier(.2, .7, .2, 1) .14s backwards; }
+  .hero-copy h1 span + br + span { animation-delay: .23s; }
+  .campaign-description { animation: campaign-copy-enter .56s ease-out .34s backwards; }
+  .collection-jump { animation: campaign-copy-enter .54s ease-out .43s backwards; }
+  .collection-jump svg { transition: transform .2s ease; }
+  .collection-jump:hover svg { transform: translate(2px, 2px); }
+  .hero-copy:focus-within .collection-jump { animation: none; }
+  .product-card[data-reveal="pending"]:not(:focus-within) { opacity: 0; transform: translateY(18px); }
+  .product-card[data-reveal="shown"]:not(:focus-within) {
+    transition: opacity .48s ease-out, transform .59s cubic-bezier(.2, .65, .25, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
   .product-card img { transition: transform .3s ease; }
   .product-card a:hover img, .product-card a:focus-visible img { transform: scale(1.025); }
   .detail-add, .detail-cart-link { transition: background-color .16s ease, border-color .16s ease; }
   .detail-cart-link svg { transition: transform .16s ease; }
   .detail-cart-link:hover svg { transform: translateX(2px); }
   .detail-cart-feedback.is-added { animation: cart-feedback-in .22s ease-out; }
+}
+@keyframes campaign-photo-enter {
+  from { opacity: .52; transform: scale(1.045); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes campaign-title-enter {
+  from { opacity: 0; transform: translateY(.3em); clip-path: inset(95% -.1em -.18em); }
+  to { opacity: 1; transform: translateY(0); clip-path: inset(-.18em -.1em); }
+}
+@keyframes campaign-copy-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes cart-feedback-in {
   from { opacity: 0; transform: translateY(4px); }

@@ -1,5 +1,5 @@
 import { categories, type Product } from '@thread/shared';
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowDownRight, ArrowLeft, ArrowRight, Check, Minus, Plus, Search, ShoppingBag } from 'lucide-react';
 import campaignImage from '../../assets/campaign.webp';
@@ -33,12 +33,14 @@ export function ProductCard({ product }: { product: Product }) {
 }
 
 export function Products() {
+  const [campaignLoaded, setCampaignLoaded] = useState(false);
   const [category, setCategory] = useState('');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('default');
   const [products, setProducts] = useState<Product[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
+  const productGrid = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -53,19 +55,49 @@ export function Products() {
     return () => controller.abort();
   }, [query, attempt]);
 
+  useLayoutEffect(() => {
+    if (!productGrid.current || typeof IntersectionObserver === 'undefined' ||
+        !window.matchMedia?.('(prefers-reduced-motion: no-preference)').matches) return;
+
+    const cards = Array.from(productGrid.current.querySelectorAll<HTMLElement>('.product-card'))
+      .filter(card => card.getBoundingClientRect().top >= window.innerHeight);
+    const observer = new IntersectionObserver(entries => {
+      entries.filter(entry => entry.isIntersecting).forEach(({ target }, index) => {
+        const card = target as HTMLElement;
+        card.style.setProperty('--reveal-delay', `${Math.min(index, 2) * 65}ms`);
+        card.dataset.reveal = 'shown';
+        observer.unobserve(card);
+      });
+    }, { threshold: .1 });
+
+    cards.forEach(card => {
+      card.dataset.reveal = 'pending';
+      observer.observe(card);
+    });
+    return () => {
+      observer.disconnect();
+      cards.forEach(card => {
+        delete card.dataset.reveal;
+        card.style.removeProperty('--reveal-delay');
+      });
+    };
+  }, [products, state]);
+
   return <>
     <section className="shop-hero" aria-labelledby="campaign-title">
       <div className="hero-copy">
         <p className="campaign-label">THREAD 定番コレクション</p>
-        <h1 id="campaign-title" lang="en">Daily <br />Uniform.</h1>
+        <h1 id="campaign-title" lang="en"><span>Daily</span> <br /><span>Uniform.</span></h1>
         <p className="campaign-description">繰り返し着たくなる、素材とシルエット。</p>
         <button className="collection-jump" onClick={() => {
           const heading = document.getElementById('collection');
+          const smooth = window.matchMedia?.('(prefers-reduced-motion: no-preference)').matches;
           heading?.focus({ preventScroll: true });
-          heading?.scrollIntoView({ block: 'start' });
+          heading?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
         }}>商品を見る <ArrowDownRight size={17} aria-hidden="true" /></button>
       </div>
       <img className="campaign-photo" src={campaignImage} width={1536} height={1024} fetchPriority="high"
+        data-loaded={campaignLoaded || undefined} onLoad={() => setCampaignLoaded(true)}
         alt="コンクリートの建物を背景に、ジャケットとワイドパンツを着こなす女性と男性のモデル" />
     </section>
     <section className="catalog" aria-labelledby="collection">
@@ -86,7 +118,7 @@ export function Products() {
       </div>
       {state === 'loading' && <p role="status">商品を読み込み中…</p>}
       {state === 'error' && <p role="alert">商品を取得できませんでした。 <button onClick={() => setAttempt(n => n + 1)}>再試行</button></p>}
-      {state === 'ready' && (products.length ? <div className="products">{sortProducts(products, sort).map(product => <ProductCard key={product.id} product={product} />)}</div> : <p>該当する商品はありません。</p>)}
+      {state === 'ready' && (products.length ? <div className="products" ref={productGrid}>{sortProducts(products, sort).map(product => <ProductCard key={product.id} product={product} />)}</div> : <p>該当する商品はありません。</p>)}
     </section>
   </>;
 }
