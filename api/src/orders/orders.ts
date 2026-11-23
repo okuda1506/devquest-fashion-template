@@ -15,6 +15,12 @@ class OrdersRepository {
   list(userId?: string) {
     return this.db.order.findMany({ where: { userId }, include: { items: true }, orderBy: { createdAt: 'desc' } });
   }
+  adminList() {
+    return this.db.order.findMany({
+      include: { items: true, user: { select: { name: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
   update(id: string, status: OrderStatus) { return this.db.order.updateMany({ where: { id }, data: { status } }); }
   transact<T>(process: (db: Prisma.TransactionClient) => Promise<T>) {
     return this.db.$transaction(process, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
@@ -25,6 +31,7 @@ class OrdersRepository {
 class OrdersService {
   constructor(private readonly repo: OrdersRepository) {}
   list(userId?: string) { return this.repo.list(userId); }
+  adminList() { return this.repo.adminList(); }
   async update(id: string, status: OrderStatus) {
     if (!(await this.repo.update(id, status)).count) throw new NotFoundException('注文が見つかりません。');
     return { updated: true };
@@ -75,7 +82,7 @@ class OrdersController {
 @Controller('admin/orders')
 class AdminOrdersController {
   constructor(private readonly orders: OrdersService) {}
-  @Get() list() { return this.orders.list(); }
+  @Get() list() { return this.orders.adminList(); }
   @Patch(':id') update(@Param('id') id: string, @Body() dto: StatusDto) { return this.orders.update(id, dto.status); }
 }
 

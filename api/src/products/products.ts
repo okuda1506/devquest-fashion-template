@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Injectable, Module, NotFoundException, Param, Patch, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { randomUUID } from 'node:crypto';
+import { Body, Controller, Get, Injectable, Module, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiProperty, ApiPropertyOptional, ApiTags, PartialType } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 import { Prisma } from '../generated/prisma/client';
 import { Db } from '../db';
 import { AdminOnly, AuthGuard, AuthModule } from '../auth/auth';
@@ -13,11 +14,21 @@ class ProductQuery {
   @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) page = 1;
   @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
 }
-class UpdateProduct {
-  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(100) name?: string;
-  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(1000000) price?: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() isPublished?: boolean;
+class ProductFields {
+  @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(100)
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  name!: string;
+
+  @ApiProperty() @IsString() @MaxLength(2000) description!: string;
+  @ApiProperty({ enum: categories }) @IsIn(categories) category!: string;
+  @ApiProperty() @IsInt() @Min(0) @Max(1000000) price!: number;
+  @ApiProperty() @IsBoolean() isPublished!: boolean;
 }
+class CreateProduct extends ProductFields {
+  @ApiPropertyOptional({ default: 0 }) @ValidateIf((_, value) => value !== undefined)
+  @IsInt() @Min(0) @Max(100000) stock?: number;
+}
+class UpdateProduct extends PartialType(ProductFields, { skipNullProperties: false }) {}
 
 @Injectable()
 export class ProductsRepository {
@@ -37,6 +48,9 @@ export class ProductsRepository {
 
   detail(id: string) { return this.db.product.findFirst({ where: { id, isPublished: true } }); }
   adminList() { return this.db.product.findMany({ orderBy: { id: 'asc' } }); }
+  create({ stock = 0, ...data }: CreateProduct) {
+    return this.db.product.create({ data: { id: randomUUID(), stock, ...data } });
+  }
   update(id: string, data: UpdateProduct) { return this.db.product.updateMany({ where: { id }, data }); }
 }
 
@@ -50,6 +64,7 @@ export class ProductsService {
     return product;
   }
   adminList() { return this.repository.adminList(); }
+  create(dto: CreateProduct) { return this.repository.create(dto); }
   async update(id: string, dto: UpdateProduct) {
     if (!(await this.repository.update(id, dto)).count) throw new NotFoundException('商品が見つかりません。');
     return { updated: true };
@@ -72,6 +87,7 @@ class ProductsController {
 class AdminProductsController {
   constructor(private readonly products: ProductsService) {}
   @Get() list() { return this.products.adminList(); }
+  @Post() create(@Body() dto: CreateProduct) { return this.products.create(dto); }
   @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateProduct) { return this.products.update(id, dto); }
 }
 
