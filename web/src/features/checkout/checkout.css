@@ -1,0 +1,68 @@
+.checkout-page { max-width: 1020px; }
+.checkout-page h1:focus { outline: none; }
+.checkout-progress {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none; padding: 0; margin: 0 0 30px; border-bottom: 1px solid var(--line);
+}
+.checkout-progress li {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 0 4px 12px; color: var(--subtle); font-size: 13px; border-bottom: 2px solid transparent;
+}
+.checkout-progress li[aria-current="step"] { border-color: var(--ink); color: var(--ink); font-weight: 650; }
+.checkout-progress li[data-completed] { color: var(--ink); }
+.checkout-step-number {
+  display: grid; place-items: center; width: 22px; height: 22px; flex: none;
+  border: 1px solid var(--line); font-size: 11px; font-variant-numeric: tabular-nums;
+}
+.checkout-progress li[aria-current="step"] .checkout-step-number { color: white; background: var(--ink); border-color: var(--ink); }
+.checkout-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); align-items: start; gap: clamp(18px, 3.6vw, 46px); }
+.checkout-summary, .checkout-card, .checkout-form fieldset {
+  border: 1px solid var(--line); padding: clamp(14px, 2vw, 24px); margin: 0; min-width: 0;
+}
+.checkout-summary { background: #f8f8f7; }
+.checkout-page h2, .checkout-form legend { font-size: 16px; font-weight: 650; margin: 0 0 12px; }
+.checkout-form legend { padding-inline: 5px; margin: 0; }
+.checkout-form label { display: grid; gap: 6px; white-space: normal; margin-bottom: 14px; font-size: 13px; }
+.checkout-form label:last-child { margin-bottom: 0; }
+.checkout-form input, .checkout-form select { width: 100%; min-width: 0; min-height: 41px; }
+.checkout-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; }
+.checkout-fields label { margin: 0; }
+.checkout-method { padding: 15px 0; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.checkout-method p { margin: 0; font-size: 13px; color: var(--subtle); }
+.checkout-summary ul { list-style: none; padding: 0; margin: 0 0 11px; }
+.checkout-summary li, .checkout-summary dl div { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-block: 8px; }
+.checkout-summary li { font-size: 14px; border-bottom: 1px solid var(--line); }
+.checkout-summary li span { overflow-wrap: anywhere; min-width: 0; }
+.checkout-summary li strong, .checkout-summary dd { white-space: nowrap; }
+.checkout-summary small { display: block; color: var(--subtle); margin-top: 3px; }
+.checkout-summary dl, .checkout-summary dd, .checkout-delivery dd { margin: 0; }
+.checkout-summary dl { font-size: 13px; }
+.checkout-summary .checkout-total { border-top: 1px solid var(--ink); font-weight: 650; padding-top: 12px; }
+.checkout-total dd { font-size: 17px; }
+.checkout-delivery { font-size: 13px; margin: 0 0 13px; }
+.checkout-delivery div {
+  display: grid; grid-template-columns: minmax(0, 80px) minmax(0, 1fr);
+  gap: 10px; padding-block: 9px; border-bottom: 1px solid var(--line);
+}
+.checkout-delivery dt { color: var(--subtle); }
+.checkout-delivery dd { overflow-wrap: anywhere; }
+.checkout-card .back-link { margin-bottom: 0; }
+.checkout-primary { min-height: 45px; }
+.checkout-form .checkout-primary, .checkout-confirm .checkout-primary { width: 100%; }
+.checkout-confirm { margin-top: 15px; }
+.checkout-confirm > p { font-size: 13px; color: var(--subtle); }
+.checkout-error { padding: 8px 10px; background: #fdf2ef; margin-bottom: 10px; font-size: 13px; }
+.checkout-error p { margin: 6px 0; }
+.checkout-success-icon {
+  display: grid; place-items: center; width: 38px; height: 38px;
+  background: #e9f4ed; color: #2a6346; border-radius: 50%; margin-bottom: 15px;
+}
+.checkout-order-id { font-family: ui-monospace, monospace; font-size: 13px; overflow-wrap: anywhere; }
+.checkout-links { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 16px; font-size: 13px; }
+@media (max-width: 700px) {
+  .checkout-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .checkout-progress { margin-bottom: 22px; }
+  .checkout-progress li { gap: 3px; font-size: 11px; }
+  .checkout-step-number { width: 17px; height: 17px; font-size: 9px; }
+  .checkout-form input, .checkout-form select { font-size: 16px; }
+}

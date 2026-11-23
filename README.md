@@ -45,6 +45,14 @@ PostgreSQL はローカルの 55432 番ポートで共通利用します。初�
 
 これらはローカル演習専用アカウントです。THREAD の DB や API を一般公開する構成では使用しないでください。決済処理は模擬です。
 
+## 購入手続き
+
+EC サイトでログインして商品をカートに入れると、**カート → 配送先入力 → 注文確認 → 完了**の順に進めます。配送先と電話番号を入力し、確認画面で商品・数量・金額・配送先を確認します。送料は無料、支払い方法は模擬の代金引換です。入力には演習用の架空の住所を使ってください。
+
+確定時に最新のカート・金額・在庫を照合します。同じ確認画面から確定を再送しても注文番号は変わりません。完了画面では注文番号を表示し、注文履歴と店舗管理から保存された配送先を確認できます。
+
+既存クローンを更新した場合は、`.env` を読み込んだターミナルで `npm run db:generate` と `npm run db:migrate` を実行してから、開発サーバーを再起動してください。配送先の列を追加するマイグレーションで、過去の注文も表示できます。
+
 ## 店舗管理
 
 店舗管理を別のタブで開き、管理者アカウントでログインします。ダッシュボードに登録商品数・在庫切れ・発送待ちが表示されます。
@@ -84,21 +92,21 @@ DevQuest の指定ブランチにコミットを push し、Actions の結果を
 
 **DEV-111 の予定**は、既存の数量更新を土台に、変更前後の数量・担当者・日時・理由を記録し、店舗管理から履歴を確認できるようにすることです。履歴の実装と採点は課題公開時に追加します。
 
-### 分離前から演習を進めている場合
+### 旧版から演習を進めている場合
 
-新しい提出には `thread-split-v1` の採点ファイルが必要です。分離前にテンプレートから作成したリポジトリでは、作業ツリーを整理してから下記のように移行差分だけを適用します。テンプレートから作られたリポジトリは上流とコミット履歴を共有しないため、既存の修正と衝突する箇所は Git で解決してください。
+今回の採点基準は `thread-checkout-v1` です。`thread-split-v1` で演習中のリポジトリは、その版で引き続き採点できます。購入手続きの変更を取り込む場合は、以下の移行差分を適用します。テンプレートから作られたリポジトリは上流とコミット履歴を共有しないため、既存の修正と衝突する箇所は Git で解決してください。
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git fetch https://github.com/okuda1506/devquest-fashion-template.git 7d4f1f33a70257bf4bf6b28e0947a6180840a81b refs/tags/thread-split-v1:refs/tags/thread-split-v1
-git diff --binary --find-renames 7d4f1f33a70257bf4bf6b28e0947a6180840a81b thread-split-v1 | git apply --3way --index
+git fetch https://github.com/okuda1506/devquest-fashion-template.git tag thread-split-v1 tag thread-checkout-v1
+git diff --binary --find-renames thread-split-v1 thread-checkout-v1 | git apply --3way --index
 git diff --cached
-git commit -m "THREAD の EC と店舗管理の分離に追従"
+git commit -m "THREAD の購入手続きに追従"
 git push origin main
 npm ci
 ```
 
-作業中の課題があれば、移行済みの main を作業ブランチに取り込んでから再提出します。移行でコミット履歴や DevQuest の進捗を初期化する必要はありません。
+EC と店舗管理を分離する前から演習している場合は、両タグに加えて `7d4f1f33a70257bf4bf6b28e0947a6180840a81b` を取得し、差分の開始点を `thread-split-v1` の代わりにそのコミットにします。作業中の課題があれば、移行済みの main を作業ブランチに取り込んでから再提出します。移行でコミット履歴や DevQuest の進捗を初期化する必要はありません。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。

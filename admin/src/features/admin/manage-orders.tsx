@@ -50,6 +50,12 @@ export function ManageOrders() {
         </summary>
         <div className="admin-receipt">
           <p>購入者メールアドレス <span>{order.user.email}</span></p>
+          {order.shippingAddress && <p>
+            <strong>配送先</strong><br />{order.shippingAddress.name} 様<br />
+            〒{order.shippingAddress.postalCode} {order.shippingAddress.prefecture}{order.shippingAddress.city}{order.shippingAddress.line1}
+            {order.shippingAddress.line2 && <> {order.shippingAddress.line2}</>}<br />
+            電話 {order.shippingAddress.phone}
+          </p>}
           <table>
             <caption>注文明細</caption>
             <thead><tr><th scope="col">商品</th><th scope="col">単価</th><th scope="col">数量</th><th scope="col">小計</th></tr></thead>

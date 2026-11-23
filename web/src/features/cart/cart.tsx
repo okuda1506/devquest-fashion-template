@@ -3,48 +3,58 @@ import { Link } from 'react-router-dom';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
 import { ProductVisual } from '../products/product-visual';
-import type { Product } from '../products/products';
-
-type Item = { productId: string; product: Product; quantity: number };
+import type { CartItem } from '@thread/shared';
+import { CheckoutPage } from '../checkout/checkout-layout';
 
 export function Cart() {
-  const { session } = useSession();
-  const token = session?.token;
-  const [items, setItems] = useState<Item[] | null>(null);
+  const { session, checking } = useSession();
+  if (checking) return <CheckoutPage step={0} title="カート"><p role="status">ログイン状態を確認しています…</p></CheckoutPage>;
+  if (!session) return <CheckoutPage step={0} title="カート"><p><Link to="/login" state={{ returnTo: '/cart' }}>ログイン</Link>してカートを確認してください。</p></CheckoutPage>;
+  return <CartContents key={session.token} token={session.token} />;
+}
+
+function CartContents({ token }: { token: string }) {
+  const [items, setItems] = useState<CartItem[] | null>(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   useEffect(() => {
-    if (!token) return;
     const controller = new AbortController();
-    api<Item[]>('/cart', { signal: controller.signal }, token).then(setItems, (cause: Error) => {
-      if (!controller.signal.aborted) setMessage(cause.message);
-    });
+    void api<CartItem[]>('/cart', { signal: controller.signal }, token).then(
+      result => { if (!controller.signal.aborted) { setItems(result); setLoading(false); } },
+      (cause: Error) => { if (!controller.signal.aborted) { setLoadError(cause.message); setLoading(false); } },
+    );
     return () => controller.abort();
   }, [token, reload]);
-  if (!token) return <section className="utility-page"><h1>カート</h1><p><Link to="/login">ログイン</Link>してカートを確認してください。</p></section>;
-
-  async function change(path: string, options: RequestInit, success?: string) {
+  async function change(path: string, options: RequestInit) {
     setBusy(true); setMessage('');
-    try { await api(path, options, token); setReload(n => n + 1); if (success) setMessage(success); }
+    try { await api(path, options, token); setLoading(true); setReload(n => n + 1); }
     catch (error) { setMessage((error as Error).message); }
     finally { setBusy(false); }
   }
 
-  return <section className="utility-page"><h1>カート</h1>
-    {message && <p role="status">{message}</p>}
-    {!items && !message && <p role="status">読み込み中…</p>}
-    {items?.length === 0 && <p>カートに商品がありません。 <Link to="/">買い物を続ける</Link></p>}
-    {!!items?.length && <>
+  return <CheckoutPage step={0} title="カート">
+    {message && <p role="alert">{message}</p>}
+    {loading && <p role="status">読み込み中…</p>}
+    {loadError && <div><p role="alert">{loadError}</p>
+      <button onClick={() => { setLoadError(''); setLoading(true); setReload(n => n + 1); }}>再試行</button></div>}
+    {!loadError && items?.length === 0 && <p>カートに商品がありません。 <Link to="/">買い物を続ける</Link></p>}
+    {!loadError && !!items?.length && <>
       {items.map(item => <div className="row" key={item.productId}>
         <Link className="cart-product" to={'/products/' + item.productId}><ProductVisual product={item.product} />{item.product.name}</Link>
         <span>{yen(item.product.price)}</span>
-        <label>数量 <input className="quantity" type="number" min={1} max={99} value={item.quantity} disabled={busy}
+        <label>数量 <input className="quantity" type="number" min={1} max={99} value={item.quantity} disabled={busy || loading}
           onChange={event => { const quantity = event.target.valueAsNumber; if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 99) void change('/cart/' + item.productId, { method: 'PUT', body: JSON.stringify({ quantity }) }); }} /></label>
-        <button disabled={busy} onClick={() => void change('/cart/' + item.productId, { method: 'DELETE' })}>削除</button>
+        <button disabled={busy || loading} onClick={() => void change('/cart/' + item.productId, { method: 'DELETE' })}>削除</button>
       </div>)}
       <p className="cart-total">合計 <strong>{yen(items.reduce((sum, item) => sum + item.quantity * item.product.price, 0))}</strong></p>
-      <button disabled={busy} onClick={() => void change('/orders', { method: 'POST' }, '注文が確定しました。')}>注文する</button>
+      <div className="checkout-links">
+        {busy || loading ? <button disabled className="checkout-primary">購入手続きへ</button>
+          : <Link className="action-link checkout-primary" to="/checkout">購入手続きへ</Link>}
+        <Link to="/">買い物を続ける</Link>
+      </div>
     </>}
-  </section>;
+  </CheckoutPage>;
 }

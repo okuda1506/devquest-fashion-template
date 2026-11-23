@@ -22,7 +22,7 @@ beforeAll(async () => {
   await app.init();
   db = app.get(Db);
   await db.product.upsert({
-    where: { id: sku }, update: { stock: 2 },
+    where: { id: sku }, update: { stock: 2, price: 3000 },
     create: { id: sku, name: '注文検証用商品', category: 'tops', description: '', price: 3000, stock: 2 },
   });
   const user = await db.user.upsert({
@@ -51,18 +51,45 @@ test('公開商品を検索でき、非公開商品の詳細と不正な入力�
   await request(server).get('/api/products?page=0').expect(400);
 });
 
-test('認証済みの注文を保存し、在庫不足では全体を取り消す', async () => {
+test('配送先と確認済みの商品・金額でのみ注文を確定し、再送しても注文を重複させない', async () => {
   const server = app.getHttpServer();
+  const shippingAddress = {
+    name: 'テスト 購入者', postalCode: '1000001', prefecture: '東京都', city: '千代田区',
+    line1: '1-2-3', line2: 'テストビル 101', phone: '090-1234-5678',
+  };
+  const preview = () => request(server).post('/api/orders/preview').auth(shopper, { type: 'bearer' }).send({ shippingAddress });
   await request(server).get('/api/cart').expect(401);
-  await request(server).put('/api/cart/' + sku).auth(shopper, { type: 'bearer' }).send({ quantity: 3 }).expect(200);
-  await request(server).post('/api/orders').auth(shopper, { type: 'bearer' }).expect(409);
-  await request(server).put('/api/cart/' + sku).auth(shopper, { type: 'bearer' }).send({ quantity: 2 }).expect(200);
-  const order = await request(server).post('/api/orders').auth(shopper, { type: 'bearer' }).expect(201);
-  expect(order.body.total).toBe(6000);
-  expect((await db.product.findUniqueOrThrow({ where: { id: sku } })).stock).toBe(0);
-  const orders = await request(server).get('/api/orders').auth(shopper, { type: 'bearer' }).expect(200);
-  expect(orders.body.map((item: { id: string }) => item.id)).toContain(order.body.id);
   await request(server).post('/api/orders').auth(shopper, { type: 'bearer' }).expect(400);
+  await request(server).post('/api/orders/preview').auth(shopper, { type: 'bearer' }).send({ shippingAddress: [] }).expect(400);
+  await request(server).put('/api/cart/' + sku).auth(shopper, { type: 'bearer' }).send({ quantity: 3 }).expect(200);
+  await preview().expect(409);
+  await request(server).put('/api/cart/' + sku).auth(shopper, { type: 'bearer' }).send({ quantity: 2 }).expect(200);
+  const quoted = (await preview().expect(201)).body;
+  expect(quoted.total).toBe(6000);
+  expect(quoted.shippingAddress.postalCode).toBe('100-0001');
+  const place = (quote: typeof quoted) => request(server).post('/api/orders').auth(shopper, { type: 'bearer' }).send({
+    shippingAddress: quote.shippingAddress, version: quote.version, checkoutId: quote.checkoutId,
+  });
+  await place({ ...quoted, shippingAddress: { ...shippingAddress, city: '港区' } }).expect(409);
+  await db.product.update({ where: { id: sku }, data: { price: 3100 } });
+  await place(quoted).expect(409);
+  expect((await db.product.findUniqueOrThrow({ where: { id: sku } })).stock).toBe(2);
+  const fresh = (await preview().expect(201)).body;
+  const [order, retry] = await Promise.all([place(fresh).expect(201), place(fresh).expect(201)]);
+  expect(order.body.total).toBe(6200);
+  expect(order.body.shippingAddress).toEqual(fresh.shippingAddress);
+  expect(retry.body.id).toBe(order.body.id);
+  expect((await place(fresh).expect(201)).body.id).toBe(order.body.id);
+  expect(await db.order.count({ where: { userId: id } })).toBe(1);
+  expect((await db.product.findUniqueOrThrow({ where: { id: sku } })).stock).toBe(0);
+  expect((await request(server).get('/api/cart').auth(shopper, { type: 'bearer' }).expect(200)).body).toEqual([]);
+  await request(server).get('/api/orders/' + order.body.id).auth(shopper, { type: 'bearer' }).expect(200);
+  const other = await request(server).post('/api/auth/store/login')
+    .send({ email: 'customer@example.test', password: 'thread-customer' }).expect(201);
+  await request(server).get('/api/orders/' + order.body.id).auth(other.body.token, { type: 'bearer' }).expect(404);
+  const orders = await request(server).get('/api/admin/orders').auth(admin, { type: 'bearer' }).expect(200);
+  expect(orders.body.find((item: { id: string }) => item.id === order.body.id)?.shippingAddress).toEqual(fresh.shippingAddress);
+  await preview().expect(400);
 });
 
 test('商品・在庫・注文の管理操作を管理者だけに許可する', async () => {

@@ -2,6 +2,7 @@ import { ClipboardList, LogOut, ShoppingBag, UserRound } from 'lucide-react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Link, NavLink, Route, Routes } from 'react-router-dom';
 import { Cart } from './features/cart/cart';
+import { CheckoutAddress, CheckoutComplete, CheckoutConfirm, CheckoutFlow } from './features/checkout/checkout';
 import { Login } from './features/auth/login';
 import { SessionProvider, useSession } from './features/auth/session';
 import { Orders } from './features/orders/orders';
@@ -26,6 +27,11 @@ function Shop() {
     <main><Routes>
       <Route index element={<Products />} /><Route path="/products/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<Cart />} /><Route path="/orders" element={<Orders />} />
+      <Route path="/checkout" element={<CheckoutFlow />}>
+        <Route index element={<CheckoutAddress />} />
+        <Route path="confirm" element={<CheckoutConfirm />} />
+        <Route path="complete/:id" element={<CheckoutComplete />} />
+      </Route>
       <Route path="/login" element={<Login />} />
       <Route path="*" element={<p>ページが見つかりません。 <Link to="/">商品一覧へ</Link></p>} />
     </Routes></main>

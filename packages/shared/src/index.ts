@@ -11,12 +11,17 @@ export const categories: Record<string, string> = {
   tops: 'トップス', outerwear: 'アウター', bottoms: 'ボトムス', accessories: '小物',
 };
 
+export type CartItem = { productId: string; product: Product; quantity: number };
+export type ShippingAddress = {
+  name: string; postalCode: string; prefecture: string; city: string; line1: string; line2: string; phone: string;
+};
 export const orderLabels = { PLACED: '注文受付済み', SHIPPED: '発送済み' };
 export type Order = {
   id: string;
   status: keyof typeof orderLabels;
   total: number;
   createdAt: string;
+  shippingAddress?: ShippingAddress | null;
   items: { id: string; name: string; quantity: number; unitPrice: number }[];
 };
 

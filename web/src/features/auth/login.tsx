@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from './session';
 
 export function Login() {
   const navigate = useNavigate();
+  const returnTo = useLocation().state?.returnTo;
+  const destination = returnTo === '/checkout' || returnTo === '/cart' ? returnTo : '/';
   const { login, notice } = useSession();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -13,7 +15,7 @@ export function Login() {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
       setError(''); setBusy(true);
-      try { await login(String(data.get('email')), String(data.get('password'))); navigate('/'); }
+      try { await login(String(data.get('email')), String(data.get('password'))); navigate(destination, { replace: true }); }
       catch (error) { setError((error as Error).message); }
       finally { setBusy(false); }
     }}>

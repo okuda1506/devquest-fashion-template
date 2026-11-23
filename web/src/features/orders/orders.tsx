@@ -23,6 +23,7 @@ export function Orders() {
         <div><strong>{order.items.map(item => `${item.name} × ${item.quantity}`).join('、')}</strong>
           <p>{new Date(order.createdAt).toLocaleString('ja-JP')} ・ {orderLabels[order.status]}</p></div>
         <span>{yen(order.total)}</span>
+        <Link to={'/checkout/complete/' + encodeURIComponent(order.id)}>注文内容を見る</Link>
       </article>)}
   </section>;
 }
