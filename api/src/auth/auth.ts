@@ -12,6 +12,7 @@ import { hashPassword, verifyPassword } from './password';
 const roles = { store: 'CUSTOMER', admin: 'ADMIN' } satisfies Record<Surface, Role>;
 const audiences = { CUSTOMER: 'thread-store', ADMIN: 'thread-admin' } satisfies Record<Role, string>;
 const issuer = 'thread-api';
+const sessionLifetimeSeconds = 60 * 60;
 const loginDenied = 'メールアドレスまたはパスワードが正しくありません。';
 
 type Viewer = { id: string; role: Role };
@@ -28,7 +29,7 @@ export class AuthGuard implements CanActivate {
     const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1];
     if (!token) throw new UnauthorizedException('ログインしてください。');
     const payload = await this.jwt.verifyAsync<{ sub: string; aud: string; exp: number }>(token, {
-      issuer, algorithms: ['HS256'],
+      issuer, algorithms: ['HS256'], maxAge: sessionLifetimeSeconds,
     }).catch(() => null);
     if (typeof payload?.sub !== 'string' || typeof payload.exp !== 'number') {
       throw new UnauthorizedException('再度ログインしてください。');
@@ -63,7 +64,7 @@ export class AuthService {
     // 存在しないメールアドレスでもパスワード照合を行い、エラーは共通にする。
     const valid = verifyPassword(input.password, user?.passwordHash ?? this.dummyHash);
     if (!valid || user?.role !== roles[surface]) throw new UnauthorizedException(loginDenied);
-    const exp = Math.floor(Date.now() / 1000) + 8 * 60 * 60;
+    const exp = Math.floor(Date.now() / 1000) + sessionLifetimeSeconds;
     const token = await this.jwt.signAsync({ sub: user.id, exp }, { issuer, audience: audiences[user.role], algorithm: 'HS256' });
     return { token, name: user.name, role: user.role, expiresAt: exp * 1000 };
   }
