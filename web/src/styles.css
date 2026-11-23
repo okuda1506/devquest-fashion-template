@@ -217,7 +217,6 @@ footer span { font-size: 12px; color: var(--subtle); }
 }
 @media (max-width: 600px) {
   .header-inner { gap: 12px; flex-wrap: wrap; padding-block: 8px; }
-  .header .store-nav { gap: 10px; }
   .catalog-toolbar { display: grid; gap: 13px; padding-bottom: 12px; margin-bottom: 15px; }
   .filters { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 5px 16px; }
   .catalog-search { grid-column: 1 / -1; }

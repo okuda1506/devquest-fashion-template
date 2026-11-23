@@ -41,9 +41,6 @@ function Shop() {
   return <>
     <header ref={header} className={homePage ? 'header header--home' : 'header'} data-scrolled={scrolled || undefined}><div className="header-inner">
       <Link to="/" className="wordmark" aria-label="THREAD ホーム">THREAD.</Link>
-      <nav className="store-nav" aria-label="ストア">
-        <NavLink to="/" end>商品一覧</NavLink>
-      </nav>
       <nav className="account-nav" aria-label="アカウント">
         <NavLink to="/orders" aria-label="注文履歴"><ClipboardList aria-hidden="true" /><span>注文履歴</span></NavLink>
         {session ? <button onClick={logout} aria-label="ログアウト"><LogOut aria-hidden="true" /><span>ログアウト</span></button>
