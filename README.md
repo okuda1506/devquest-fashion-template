@@ -20,6 +20,8 @@ DevQuest で改修するアパレル EC の演習用テンプレートです。�
 
 ## 初回セットアップ
 
+まず、運営から案内された DevQuest をブラウザで開き、GitHub でログインしてください。初出勤チュートリアルの「環境構築」に進んだら、この節の手順に沿って THREAD の開発環境をセットアップします。学習者がローカルで起動するのは THREAD の EC サイト・店舗管理画面・API・DB です。
+
 Node.js 22.12 以上または 24、npm、Docker Compose v2 を用意します。GitHub の **Use this template** から個人所有の公開リポジトリを作成し、ローカルの VS Code で開きます。リポジトリを DevQuest に登録してください。
 
 ```sh
