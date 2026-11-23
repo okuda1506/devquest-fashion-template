@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 import { Link, useParams } from 'react-router-dom';
 import { ArrowDownRight, ArrowLeft, ArrowRight, Check, Minus, Plus, Search, ShoppingBag } from 'lucide-react';
 import campaignImage from '../../assets/campaign.webp';
+import campaignPortrait from '../../assets/campaign-portrait.webp';
 import { ProductVisual } from './product-visual';
 import { api, yen } from '../../api';
 import { useSession } from '../auth/session';
@@ -96,9 +97,12 @@ export function Products() {
           heading?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
         }}>商品を見る <ArrowDownRight size={17} aria-hidden="true" /></button>
       </div>
-      <img className="campaign-photo" src={campaignImage} width={1536} height={1024} fetchPriority="high"
-        data-loaded={campaignLoaded || undefined} onLoad={() => setCampaignLoaded(true)}
-        alt="コンクリートの建物を背景に、ジャケットとワイドパンツを着こなす女性と男性のモデル" />
+      <picture className="campaign-frame">
+        <source media="(max-aspect-ratio: 4/5)" srcSet={campaignPortrait} width={941} height={1672} />
+        <img className="campaign-photo" src={campaignImage} width={1536} height={1024} fetchPriority="high"
+          data-loaded={campaignLoaded || undefined} onLoad={() => setCampaignLoaded(true)}
+          alt="コンクリートの建物を背景に、ジャケットとワイドパンツを着こなす女性と男性のモデル" />
+      </picture>
     </section>
     <section className="catalog" aria-labelledby="collection">
       <div className="catalog-toolbar">

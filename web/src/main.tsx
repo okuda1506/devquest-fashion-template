@@ -1,5 +1,5 @@
 import { ClipboardList, LogOut, ShoppingBag, UserRound } from 'lucide-react';
-import { useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Link, NavLink, Route, Routes, useMatch } from 'react-router-dom';
 import { Cart } from './features/cart/cart';
@@ -16,10 +16,30 @@ function Shop() {
   const { items } = useCart();
   const cartQuantity = items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const cartIcon = useRef<HTMLSpanElement>(null);
+  const header = useRef<HTMLElement>(null);
   const homePage = useMatch('/');
-  const detailPage = useMatch('/products/:id');
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 24);
+
+  useLayoutEffect(() => {
+    const element = header.current;
+    if (!element) return;
+    const rootStyle = document.documentElement.style;
+    const measureHeader = () => rootStyle.setProperty('--store-header-height', `${element.offsetHeight}px`);
+    measureHeader();
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measureHeader);
+    observer?.observe(element);
+
+    const updateScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', updateScroll, { passive: true });
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('scroll', updateScroll);
+      rootStyle.removeProperty('--store-header-height');
+    };
+  }, []);
+
   return <>
-    <header className={detailPage ? 'header header--sticky' : 'header'}><div className="header-inner">
+    <header ref={header} className={homePage ? 'header header--home' : 'header'} data-scrolled={scrolled || undefined}><div className="header-inner">
       <Link to="/" className="wordmark" aria-label="THREAD ホーム">THREAD.</Link>
       <nav className="store-nav" aria-label="ストア">
         <NavLink to="/" end>商品一覧</NavLink>
