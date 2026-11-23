@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String @id
+  name        String
+  description String
+  category    String
+  price       Int
+  stock       Int
+  isPublished Boolean @default(true)
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+
+  @@index([category])
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id           String @id @default(cuid())
+  email        String @unique
+  name         String
+  passwordHash String
+  role         Role @default(CUSTOMER)
+  cartItems    CartItem[]
+  orders       Order[]
+}
+
+model CartItem {
+  userId    String
+  productId String
+  quantity  Int
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@id([userId, productId])
+}
+
+enum OrderStatus {
+  PLACED
+  SHIPPED
+}
+
+model Order {
+  id         String @id @default(cuid())
+  userId     String
+  total      Int
+  status     OrderStatus @default(PLACED)
+  createdAt  DateTime @default(now())
+  user       User @relation(fields: [userId], references: [id])
+  items      OrderItem[]
+
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  name      String
+  unitPrice Int
+  quantity  Int
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}

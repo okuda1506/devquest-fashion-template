@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,
+    "experimentalDecorators":true,"emitDecoratorMetadata":true,"esModuleInterop":true,
+    "skipLibCheck":true,"noEmit":true,"types":["node","jest"]
+  }, "include":["src","prisma","../grading/*.api.test.ts"]
+}

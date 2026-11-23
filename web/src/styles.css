@@ -1,0 +1,18 @@
+:root{font-family:Inter,"Noto Sans JP",system-ui,sans-serif;color:#242822;background:#f8f7f2;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}a{color:inherit;text-underline-offset:4px}button,input,select{font:inherit}
+button{background:#323a2a;color:#fff;border:1px solid #323a2a;padding:.55rem .9rem;border-radius:4px;cursor:pointer}button:disabled{opacity:.5;cursor:default}
+input,select{background:#fff;border:1px solid #b7b9af;padding:.5rem;border-radius:4px;color:#222}
+.header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem clamp(1rem,5vw,5rem);border-bottom:1px solid #ddded6}
+.wordmark{font-weight:900;font-size:1.6rem;letter-spacing:-.08em;text-decoration:none}.header nav{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}.header nav a{text-decoration:none}.header nav a.active{text-decoration:underline}
+main{max-width:1240px;margin:auto;padding:2rem clamp(1rem,5vw,4rem);min-height:75vh}
+.shop-hero{padding:clamp(2rem,8vw,6rem) clamp(1rem,6vw,5rem);color:#f4f2e7;background:#333d30;border-radius:8px;margin-bottom:2.5rem}
+.shop-hero h1{font-size:clamp(2.25rem,6vw,5rem);margin:.6rem 0;letter-spacing:-.07em}.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.09em}
+.filters,.row{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;margin-bottom:1rem}.filters label,.form label{display:grid;gap:.4rem}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1.25rem}
+.product-card a{display:block;text-decoration:none}.product-card h2{font-size:1rem;margin:.3rem 0}.product-card p{margin:.4rem 0}
+.product-visual{min-height:150px;aspect-ratio:5 / 3;display:grid;place-items:center;background:#dde3d7;border-radius:6px;margin-bottom:1rem;color:#384636}
+.product-visual span{font-size:1.4rem;font-weight:900;letter-spacing:.35em}.outerwear{background:#ebe0cd;color:#654e35}.bottoms{background:#e0e3eb;color:#3a465e}.accessories{background:#ead9d3;color:#754f43}
+.detail{display:grid;grid-template-columns:1fr 1fr;gap:2rem}.row{border-bottom:1px solid #d9dace;padding:1rem 0;justify-content:space-between}.row p{margin:.3rem 0}.quantity{width:5rem}
+.stack{display:grid;gap:1rem}.form{max-width:360px}
+footer{padding:1.5rem clamp(1rem,5vw,5rem);border-top:1px solid #d9dace;font-weight:700}footer span{font-weight:400;margin-left:1rem}
+:focus-visible{outline:3px solid #226495;outline-offset:3px}@media(max-width:620px){.header{align-items:flex-start;flex-direction:column}.detail{grid-template-columns:1fr}}
