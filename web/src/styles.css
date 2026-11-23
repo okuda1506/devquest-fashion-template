@@ -93,7 +93,7 @@ main { min-height: 74vh; }
 .detail h1, .utility-page h1 { margin: 8px 0 16px; font-size: clamp(25px, 2.7vw, 42px); font-weight: 600; letter-spacing: -.055em; line-height: 1.4; }
 .detail-price { display: block; font-size: 21px; font-weight: 500; }
 .detail-description { color: var(--subtle); line-height: 1.9; padding-block: 18px; border-block: 1px solid var(--line); margin-top: 28px; }
-.detail-copy > .action-link, .detail-copy > button { width: 100%; min-height: 48px; }
+.detail-copy > .action-link, .detail-actions > :is(button, .action-link) { width: 100%; min-height: 48px; }
 .detail-copy p:empty { margin: 0; }
 .utility-page { max-width: 1060px; margin: clamp(32px, 5vw, 75px) auto clamp(55px, 8vw, 120px); }
 .utility-page h1 { margin-bottom: 28px; }

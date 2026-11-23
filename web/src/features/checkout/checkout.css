@@ -46,11 +46,13 @@
 }
 .checkout-delivery dt { color: var(--subtle); }
 .checkout-delivery dd { overflow-wrap: anywhere; }
-.checkout-card .back-link { margin-bottom: 0; }
 .checkout-primary { min-height: 45px; }
 .checkout-form .checkout-primary, .checkout-confirm .checkout-primary { width: 100%; }
 .checkout-confirm { margin-top: 15px; }
 .checkout-confirm > p { font-size: 13px; color: var(--subtle); }
+.checkout-confirm-actions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
+.checkout-back { background: white; color: var(--ink); border-color: var(--line); }
+.checkout-back:hover:not(:disabled) { background: #f4f4f4; }
 .checkout-error { padding: 8px 10px; background: #fdf2ef; margin-bottom: 10px; font-size: 13px; }
 .checkout-error p { margin: 6px 0; }
 .checkout-success-icon {

@@ -93,8 +93,6 @@ export function ProductDetail() {
   const { id } = useParams();
   const { session } = useSession();
   const [result, setResult] = useState<{ id?: string; item?: Product; error?: string }>({});
-  const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     api<Product>('/products/' + encodeURIComponent(id ?? ''), { signal: controller.signal }).then(
@@ -113,14 +111,29 @@ export function ProductDetail() {
     <h1>{product.name}</h1><strong className="detail-price">{yen(product.price)}</strong>
     <p className="detail-description">{product.description}</p>
     <p>{product.stock > 0 ? `在庫 ${product.stock} 点` : '在庫切れ'}</p>
-    {session ? <button type="button" disabled={!product.stock || busy} onClick={async () => {
+    {session ? <AddToCart key={product.id + ':' + session.token} product={product} token={session.token} />
+      : <Link className="action-link" to="/login">ログインして購入 <ArrowUpRight size={17} aria-hidden="true" /></Link>}
+  </section></div></div>;
+}
+
+function AddToCart({ product, token }: { product: Product; token: string }) {
+  const [added, setAdded] = useState(false);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  return <div className="detail-actions">
+    <button type="button" disabled={!product.stock || busy} onClick={async () => {
+      setAdded(false);
+      setError('');
       setBusy(true);
       try {
-        await api('/cart/' + product.id, { method: 'PUT', body: '{"quantity":1}' }, session.token);
-        setMessage('カートに追加しました。');
-      } catch (error) { setMessage((error as Error).message); }
+        await api('/cart/' + product.id, { method: 'PUT', body: '{"quantity":1}' }, token);
+        setAdded(true);
+      } catch (cause) { setError((cause as Error).message); }
       finally { setBusy(false); }
-    }}>カートに追加</button> : <Link className="action-link" to="/login">ログインして購入 <ArrowUpRight size={17} aria-hidden="true" /></Link>}
-    <p role="status">{message}</p>
-  </section></div></div>;
+    }}>{busy ? '追加中…' : 'カートに追加'}</button>
+    <p role="status">{added ? 'カートに追加しました。' : ''}</p>
+    {error && <p role="alert">{error}</p>}
+    {added && <Link className="action-link" to="/checkout">購入画面へ <ArrowUpRight size={17} aria-hidden="true" /></Link>}
+  </div>;
 }

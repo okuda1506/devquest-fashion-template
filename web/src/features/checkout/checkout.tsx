@@ -185,13 +185,17 @@ export function CheckoutConfirm() {
         <section className="checkout-card" aria-labelledby="delivery-title">
           <h2 id="delivery-title">配送先とお支払い</h2>
           <DeliveryDetails address={review.shippingAddress} />
-          {!busy && <Link to="/checkout" className="back-link">配送先を変更する</Link>}
         </section>
         <form className="checkout-confirm" onSubmit={event => { void placeOrder(event, review); }}>
           <p>こちらは演習用の注文です。実際の請求・配送はありません。</p>
           {error && <div className="checkout-error" role="alert"><p>{error}</p>
             <p><Link to="/checkout">注文内容を確認し直す</Link> · <Link to="/orders">注文履歴を見る</Link></p></div>}
-          <button className="checkout-primary" disabled={busy}>{busy ? '注文を処理中…' : '注文を確定する'} <ArrowRight size={17} aria-hidden="true" /></button>
+          <div className="checkout-confirm-actions">
+            <button type="button" className="checkout-back" disabled={busy} onClick={() => navigate('/checkout')}>
+              <ArrowLeft size={16} aria-hidden="true" /> 戻る
+            </button>
+            <button className="checkout-primary" disabled={busy}>{busy ? '注文を処理中…' : '注文を確定する'} <ArrowRight size={17} aria-hidden="true" /></button>
+          </div>
         </form>
       </div>
       <OrderSummary items={review.items} total={review.total} />
