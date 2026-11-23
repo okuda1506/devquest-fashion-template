@@ -14,6 +14,10 @@ DevQuest で改修するアパレル EC の演習用テンプレートです。�
 
 グラフと注文一覧には演習用のサンプル受注を表示しています。
 
+## システムアーキテクチャ
+
+![DevQuest の認証・採点と THREAD の EC サイト・店舗管理・API・DB の構成図](docs/system-architecture.png)
+
 ## 初回セットアップ
 
 Node.js 22.12 以上または 24、npm、Docker Compose v2 を用意します。GitHub の **Use this template** から個人所有の公開リポジトリを作成し、ローカルの VS Code で開きます。リポジトリを DevQuest に登録してください。
@@ -103,22 +107,5 @@ npm run grade -- task/DEV-101
 DevQuest の指定ブランチにコミットを push し、Actions の結果を確認します。合格したら GitHub で自分で PR を作り、main へマージします。次回も最新の main から始めます。以前の修正をリセットする必要はありません。DEV-105〜112 は今後追加予定です。
 
 **DEV-111 の予定**は、既存の数量更新を土台に、変更前後の数量・担当者・日時・理由を記録し、店舗管理から履歴を確認できるようにすることです。履歴の実装と採点は課題公開時に追加します。
-
-### 旧版から演習を進めている場合
-
-今回の採点基準は `thread-checkout-v1` です。`thread-split-v1` で演習中のリポジトリは、その版で引き続き採点できます。購入手続きの変更を取り込む場合は、以下の移行差分を適用します。テンプレートから作られたリポジトリは上流とコミット履歴を共有しないため、既存の修正と衝突する箇所は Git で解決してください。
-
-```sh
-git switch main
-git pull --ff-only origin main
-git fetch https://github.com/okuda1506/devquest-fashion-template.git tag thread-split-v1 tag thread-checkout-v1
-git diff --binary --find-renames thread-split-v1 thread-checkout-v1 | git apply --3way --index
-git diff --cached
-git commit -m "THREAD の購入手続きに追従"
-git push origin main
-npm ci
-```
-
-EC と店舗管理を分離する前から演習している場合は、両タグに加えて `7d4f1f33a70257bf4bf6b28e0947a6180840a81b` を取得し、差分の開始点を `thread-split-v1` の代わりにそのコミットにします。作業中の課題があれば、移行済みの main を作業ブランチに取り込んでから再提出します。移行でコミット履歴や DevQuest の進捗を初期化する必要はありません。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。
