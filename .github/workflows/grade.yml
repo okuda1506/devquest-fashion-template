@@ -1,0 +1,63 @@
+name: THREAD 課題採点
+
+on:
+  push:
+    branches: ['task/DEV-*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: grade-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: thread
+          POSTGRES_PASSWORD: thread
+          POSTGRES_DB: thread
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U thread -d thread"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      DATABASE_URL: postgresql://thread:thread@127.0.0.1:5432/thread
+      THREAD_JWT_SECRET: ci-disposable-thread-secret-not-for-production
+    steps:
+      - name: 提出コミットを取得
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: 指定ブランチと採点ファイルを照合
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            task/DEV-101|task/DEV-102|task/DEV-103|task/DEV-104) ;;
+            *) echo '対象の課題ブランチが存在しません。'; exit 1 ;;
+          esac
+          git fetch --depth=1 https://github.com/okuda1506/devquest-fashion-template.git main
+          git diff --exit-code FETCH_HEAD "$GITHUB_SHA" -- .github/workflows grading package.json package-lock.json eslint.config.js .npmrc api/.npmrc web/.npmrc api/package.json api/jest.config.cjs api/tsconfig.json api/tsconfig.build.json web/package.json web/vite.config.ts web/tsconfig.json web/src/test-setup.ts ':(glob)**/*.test.ts' ':(glob)**/*.test.tsx'
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: インストールと DB 初期化
+        run: |
+          npm ci
+          npm run db:generate
+          npm run db:migrate
+          npm run db:seed
+      - name: 型・Lint・既存機能を検証
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+      - name: 課題テスト
+        run: npm run grade -- "$GITHUB_REF_NAME"
