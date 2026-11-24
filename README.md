@@ -110,10 +110,24 @@ npm run build
 npm run grade -- task/DEV-101
 ```
 
-通常のテストは初期状態で成功します。課題別テストは対応する改修が完了するまで、対象条件で失敗します。DEV-101〜104 では在庫表示・価格ソート・カテゴリ切り替え・公開用商品一覧を順番に改修します。新しい課題では以前の課題の挙動も回帰テストで確認します。
+通常のテストは初期状態で成功します。DEV-101〜140 の40件を各チャプター10件ずつ解放します。指定ブランチは DevQuest の課題画面で確認できます。各課題の完了条件と先に完了した課題の回帰テストを GitHub Actions が実行します。未改修のテンプレートでは各課題に未達の条件があり、そのテストは失敗します。
 
-DevQuest の指定ブランチにコミットを push し、Actions の結果を確認します。合格したら GitHub で自分で PR を作り、main へマージします。次回も最新の main から始めます。以前の修正をリセットする必要はありません。DEV-105〜112 は今後追加予定です。
+課題を進めるときは、DevQuest 指定のブランチに push します。採点に合格したら PR を作成して main にマージし、DevQuest で「マージを確認」を押すと次の課題が解放されます。手元で採点を実行する場合は、DB 更新を伴うため演習データと分けた使い捨ての PostgreSQL を使用してください。課題でお気に入り・履歴・通知などの従属レコードに外部キーを付ける場合は、親レコードの削除時に採点用データも片付くように `onDelete: Cascade` を設定してください。
 
-**DEV-111 の予定**は、既存の数量更新を土台に、変更前後の数量・担当者・日時・理由を記録し、店舗管理から履歴を確認できるようにすることです。履歴の実装と採点は課題公開時に追加します。
+### 採点の更新（すでに演習中の場合）
+
+`thread-criteria-v1` で始めた演習リポジトリは、DEV-104 の次へ進む前に採点を更新してください。演習リポジトリの main で、作業中の変更をコミットまたは退避したうえで以下を実行します。
+
+```sh
+git switch main
+git pull --ff-only origin main
+git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v2
+git restore --source=FETCH_HEAD -- .github/workflows/grade.yml grading
+git add .github/workflows/grade.yml grading
+git commit -m "40課題に対応する採点を取り込む"
+git push origin main
+```
+
+更新後の main から次の作業ブランチを作ってください。DEV-101〜104 の完了記録と過去の改修を引き継げます。v1 より古い採点を使っている場合は、先に `thread-criteria-v1` 時点のアプリと採点の変更を、演習中のコードに合わせて取り込んでください。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。
