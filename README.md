@@ -20,9 +20,57 @@ DevQuest で改修するアパレル EC の演習用テンプレートです。�
 
 ## 初回セットアップ
 
-まず、運営から案内された DevQuest をブラウザで開き、GitHub でログインしてください。初出勤チュートリアルの「環境構築」に進んだら、この節の手順に沿って THREAD の開発環境をセットアップします。学習者がローカルで起動するのは THREAD の EC サイト・店舗管理画面・API・DB です。
+まず [DevQuest](https://okuda1506.github.io/devquest-app/) をブラウザで開き、初出勤の「環境構築」まで進めます。GitHub で **Use this template** を選び、自分の個人アカウントが所有する公開リポジトリを作って DevQuest に登録してください。手元で起動するのは THREAD の EC サイト、店舗管理画面、API、DB です。
 
-Node.js 22.12 以上または 24、npm、Docker Compose v2 を用意します。GitHub の **Use this template** から個人所有の公開リポジトリを作成し、ローカルの VS Code で開きます。リポジトリを DevQuest に登録してください。
+### Windows
+
+1. **管理者として PowerShell** を開き、Ubuntu が入っていなければ次のコマンドを実行します。再起動が求められたら実行し、Ubuntu を起動して Linux 用のユーザーを作ります。
+
+   ```powershell
+   wsl --install -d Ubuntu
+   wsl --list --verbose
+   ```
+
+   一覧の Ubuntu の VERSION が 2 であることを確認します。既存の Ubuntu が VERSION 1 の場合は PowerShell で `wsl --set-version Ubuntu 2` を実行します。ディストリビューション名は一覧に表示された名前を使ってください。
+
+2. Windows に [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) をインストールして起動します。**Settings → General** で WSL 2 ベースのエンジンを使い、**Resources → WSL integration** で Ubuntu を有効にします。
+3. **Ubuntu のターミナル**で以下を実行します。Node.js は Ubuntu 側に [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) をインストールしてから導入します。
+
+   ```bash
+   sudo apt update
+   sudo apt install -y git curl ca-certificates
+   nvm install 24
+   nvm use 24
+   node --version
+   npm --version
+   docker compose version
+   ```
+
+4. 以下の共通手順も **Ubuntu のターミナル**で実行します。クローン先は `/mnt/c` 以下よりも Ubuntu のホームディレクトリを使うと、ファイル監視や依存関係のインストールを扱いやすくなります。VS Code を使う場合は **WSL** 拡張を入れ、Ubuntu 側でリポジトリを開きます。
+
+### macOS
+
+1. ターミナルで Git を確認し、必要に応じて `xcode-select --install` でコマンドラインツールを入れます。
+2. [Node.js](https://nodejs.org/) 24、または 22.12 以上の Node.js 22 と npm をインストールします。Homebrew を使う場合は `brew install node@24` を実行し、表示された PATH 設定を適用します。
+3. [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) をインストールして起動し、以下をターミナルで確認します。
+
+   ```bash
+   git --version
+   node --version
+   npm --version
+   docker compose version
+   ```
+
+4. 以下の共通手順を **macOS のターミナル**で実行します。
+
+### WindowsとmacOSの共通起動手順
+
+DevQuest が表示したクローンコマンドを使うか、次の例の `YOUR_GITHUB_ID` と `YOUR_REPOSITORY` を登録した演習リポジトリに置き換えます。
+
+```bash
+git clone https://github.com/YOUR_GITHUB_ID/YOUR_REPOSITORY.git
+cd YOUR_REPOSITORY
+```
 
 ```sh
 npm ci
@@ -43,6 +91,8 @@ npm run dev
 ```
 
 `npm run dev` で3つのアプリを同時に起動します。NestJS はリポジトリ直下の `.env` を自動で読み込みます。環境変数をエクスポート済みの場合は、その値が優先されます。Prisma の初期化コマンドを実行するときは、上記の手順で先に `.env` を読み込んでください。
+
+起動後は Windows または macOS のブラウザで EC サイトと店舗管理を開き、DevQuest の起動確認にチェックを入れます。
 
 更新後に `@thread/shared` が見つからない場合は、開発サーバーを `Ctrl+C` で停止し、リポジトリ直下で `npm ci` を実行してから `npm run dev` で起動します。
 
