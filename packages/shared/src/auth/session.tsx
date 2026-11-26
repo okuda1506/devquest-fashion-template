@@ -42,6 +42,7 @@ function readSession(key: string, app: App) {
     } catch {
         /* ストレージを利用できない環境でも画面内の状態管理は継続する */
     }
+
     return null;
 }
 

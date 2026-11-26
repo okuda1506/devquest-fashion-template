@@ -11,6 +11,7 @@ export class InventoryRepository {
      * 商品在庫を更新する DB クライアントを受け取る
      */
     constructor(private readonly db: PrismaService) {}
+
     /**
      * 編集前の在庫数を条件に含めて商品在庫を更新する
      *
@@ -22,6 +23,7 @@ export class InventoryRepository {
         // 購入などで在庫が変わっていた場合は古い編集値で上書きしない
         return this.db.product.updateMany({ where: { id, stock: expectedStock }, data: { stock } });
     }
+
     /**
      * 在庫更新に失敗した商品が存在するかを ID で調べる
      */

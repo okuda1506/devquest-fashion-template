@@ -11,12 +11,14 @@ export class OrdersRepository {
      * 注文を読み書きする DB クライアントを受け取る
      */
     constructor(private readonly db: PrismaService) {}
+
     /**
      * 注文を明細付きで新しい順に取得する
      */
     list(userId?: string) {
         return this.db.order.findMany({ where: { userId }, include: { items: true }, orderBy: { createdAt: 'desc' } });
     }
+
     /**
      * 注文 ID と顧客 ID の組み合わせで注文を取得する
      */
@@ -33,6 +35,7 @@ export class OrdersRepository {
             orderBy: { createdAt: 'desc' }
         });
     }
+
     /**
      * 指定した注文を新しいステータスに変更する
      */

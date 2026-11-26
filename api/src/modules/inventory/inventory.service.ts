@@ -12,6 +12,7 @@ export class InventoryService {
      * 在庫と競合状態の確認に使うリポジトリを受け取る
      */
     constructor(private readonly repo: InventoryRepository) {}
+
     /**
      * 在庫の更新結果から商品不存在と編集競合を判別する
      *

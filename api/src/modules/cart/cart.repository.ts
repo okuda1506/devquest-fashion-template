@@ -11,6 +11,7 @@ export class CartRepository {
      * カート明細を操作する DB クライアントを受け取る
      */
     constructor(private readonly db: PrismaService) {}
+
     /**
      * 商品情報付きのカート明細を商品 ID 順に取得する
      */
@@ -21,12 +22,14 @@ export class CartRepository {
             orderBy: { productId: 'asc' }
         });
     }
+
     /**
      * 追加または数量変更の対象になる公開商品を取得する
      */
     findProduct(id: string, source: Pick<Prisma.TransactionClient, 'product'> = this.db) {
         return source.product.findFirst({ where: { id, isPublished: true } });
     }
+
     /**
      * ユーザーと商品の複合キーで明細の数量を設定する
      */
@@ -42,12 +45,14 @@ export class CartRepository {
             create: { userId, productId, quantity }
         });
     }
+
     /**
      * 対象のユーザーと商品に一致する明細を削除する
      */
     remove(userId: string, productId: string) {
         return this.db.cartItem.deleteMany({ where: { userId, productId } });
     }
+
     /**
      * カート数量の読み取りと更新を同じ直列化可能トランザクションで処理する
      *

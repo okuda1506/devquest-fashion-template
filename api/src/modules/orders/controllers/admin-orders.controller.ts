@@ -18,12 +18,14 @@ export class AdminOrdersController {
      * 管理用の注文参照と更新を実行するサービスを受け取る
      */
     constructor(private readonly orders: OrdersService) {}
+
     /**
      * 運営に必要な全顧客の受注を一覧取得する
      */
     @Get() list() {
         return this.orders.adminList();
     }
+
     /**
      * 指定した注文の発送ステータスを更新する
      */

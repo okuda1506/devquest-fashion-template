@@ -7,6 +7,7 @@ export function useProductSearch() {
     const [params] = useSearchParams();
     const [query, setQuery] = useState(() => params.get('q') ?? '');
     const keyword = query.trim().toLowerCase();
+
     function matchesProduct(product: Product) {
         const searchText = [product.name, product.id, categories[product.category]].join(' ').toLowerCase();
         return searchText.includes(keyword);
