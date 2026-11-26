@@ -1,4 +1,4 @@
-import { ClipboardList, LogOut, ShoppingBag, UserRound } from 'lucide-react';
+import { Grid2X2, LogOut, ShoppingBag, UserRound } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useMatch } from 'react-router-dom';
 import { useSession } from '@thread/shared/session';
@@ -57,10 +57,10 @@ export function Shop() {
                         THREAD.
                     </Link>
                     <nav className="account-nav" aria-label="アカウント">
-                        <NavLink to="/orders" aria-label="注文履歴">
-                            <ClipboardList aria-hidden="true" />
-                            <span>注文履歴</span>
-                        </NavLink>
+                        <Link to="/#collection" aria-label="商品一覧">
+                            <Grid2X2 aria-hidden="true" />
+                            <span>商品一覧</span>
+                        </Link>
                         {session ? (
                             <>
                                 <NavLink to="/account" aria-label="マイページ">

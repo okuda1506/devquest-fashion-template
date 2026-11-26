@@ -1,14 +1,26 @@
 import { categories, type Product } from '@thread/shared';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowDownRight, Search } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import campaignImage from '../../assets/campaign.webp';
 import campaignPortrait from '../../assets/campaign-portrait.webp';
 import { api } from '@thread/shared';
 import { ProductCard } from './product-card';
 import { sortProducts, type Sort } from './product-sort';
 
+/**
+ * 固定ヘッダーの下に商品一覧の見出しを表示してフォーカスを移す
+ */
+function scrollToCollection() {
+    const heading = document.getElementById('collection');
+    const smooth = window.matchMedia?.('(prefers-reduced-motion: no-preference)').matches;
+    heading?.focus({ preventScroll: true });
+    heading?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+}
+
 /** ストアのトップビジュアルと商品検索結果を表示する */
 export function Products() {
+    const { hash, key } = useLocation();
     const [campaignLoaded, setCampaignLoaded] = useState(false);
     const [category, setCategory] = useState('');
     const [query, setQuery] = useState('');
@@ -20,6 +32,10 @@ export function Products() {
     const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
     const [attempt, setAttempt] = useState(0);
     const productGrid = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (hash === '#collection') scrollToCollection();
+    }, [hash, key]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -92,15 +108,7 @@ export function Products() {
                         <span>Uniform.</span>
                     </h1>
                     <p className="campaign-description">繰り返し着たくなる、素材とシルエット。</p>
-                    <button
-                        className="collection-jump"
-                        onClick={() => {
-                            const heading = document.getElementById('collection');
-                            const smooth = window.matchMedia?.('(prefers-reduced-motion: no-preference)').matches;
-                            heading?.focus({ preventScroll: true });
-                            heading?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
-                        }}
-                    >
+                    <button className="collection-jump" onClick={scrollToCollection}>
                         商品を見る <ArrowDownRight size={17} aria-hidden="true" />
                     </button>
                 </div>
