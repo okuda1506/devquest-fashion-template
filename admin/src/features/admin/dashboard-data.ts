@@ -15,7 +15,16 @@ export const orderDate = new Intl.DateTimeFormat('ja-JP', {
     minute: '2-digit'
 });
 
-/** 受注を日本時間の日別に振り分けてダッシュボード用の集計を作る */
+/**
+ * 受注を日本時間の暦日で区切ってダッシュボード用に集計する
+ *
+ * 注文がない日も件数と売上がゼロの点として残す
+ *
+ * @param orders 集計に含める候補の受注
+ * @param period 今日を含む表示日数
+ * @param now 集計の基準時刻。省略時は現在時刻
+ * @returns 日ごとの件数と売上および期間内の状態別件数
+ */
 export function summarizeOrders(orders: readonly Order[], period: DayCount, now = Date.now()) {
     // 利用端末のタイムゾーンによらず日本時間の日付境界で受注を集計する
     const today = Math.floor((now + japanOffsetMs) / dayMs);
@@ -40,7 +49,12 @@ export function summarizeOrders(orders: readonly Order[], period: DayCount, now 
     return { days, orders: pending + shipped, revenue, pending, shipped };
 }
 
-/** 受注グラフの目盛りが読みやすい値になるよう間隔を算出する */
+/**
+ * 受注グラフに表示する目盛りの間隔を算出する
+ *
+ * @param max グラフに含める最大値
+ * @returns 1 以上の読みやすい目盛り間隔
+ */
 export function chartStep(max: number) {
     if (max === 0) return 1;
     const rough = max / 4;

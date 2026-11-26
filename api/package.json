@@ -8,7 +8,9 @@
     "test": "jest --runInBand --config jest.config.cjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:large": "tsx prisma/seed-large.ts",
+    "benchmark:sales": "tsx prisma/benchmark-sales.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",

@@ -31,7 +31,7 @@ const apiCriteria = new Map([
     ['DEV-117', '12'],
     ['DEV-135', '12']
 ]);
-const newIds = selected.filter((id) => Number(id.slice(4)) >= 105);
+const newIds = selected.filter((id) => Number(id.slice(4)) >= 105 && Number(id.slice(4)) <= 140);
 const web = (files, filter) =>
     run(['exec', '--', 'vitest', 'run', '--config', 'grading/vite.config.ts', ...files, ...filter]);
 const api = (files, filter) =>
@@ -73,5 +73,10 @@ for (const [kind, runner] of [
         failures.push(
             runner([`grading/quests.${kind}.test.${kind === 'web' ? 'tsx' : 'ts'}`], ['-t', checks.join('|')])
         );
+}
+const operations = selected.filter((id) => Number(id.slice(4)) > 140);
+if (operations.length) {
+    const checks = operations.flatMap((id) => [...(condition ?? '123')].map((index) => `${id} criterion-${index}:`));
+    failures.push(api(['grading/operations.api.test.ts'], ['-t', checks.join('|')]));
 }
 if (failures.some((status) => status !== 0)) process.exit(1);

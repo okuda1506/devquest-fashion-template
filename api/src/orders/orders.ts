@@ -18,6 +18,7 @@ import { IsEnum } from 'class-validator';
 import { OrderStatus, Prisma } from '../generated/prisma/client';
 import { RequireRole, AuthGuard, AuthModule, CurrentUser } from '../auth/auth';
 import { Db } from '../db';
+import { logEvent } from '../logging';
 import { checkoutVersion, normalizeAddress, PlaceOrderDto, PreviewOrderDto } from './checkout';
 
 /** 管理画面から更新可能な注文ステータスを定義する */
@@ -76,19 +77,42 @@ class OrdersService {
     adminList() {
         return this.repo.adminList();
     }
-    /** 注文が存在する場合だけステータスの更新成功を返す */
+    /**
+     * 既存注文の発送ステータスを変更する
+     *
+     * @param id 更新対象の注文 ID
+     * @param status 変更先のステータス
+     * @returns 更新成功を示す結果
+     * @throws NotFoundException 対象注文が存在しない場合
+     */
     async update(id: string, status: OrderStatus) {
         if (!(await this.repo.update(id, status)).count) throw new NotFoundException('注文が見つかりません。');
         return { updated: true };
     }
-    /** 他の顧客の注文を開けないよう顧客 ID も指定して取得する */
+    /**
+     * 注文 ID を指定して対象顧客の注文だけを取得する
+     *
+     * @param userId 注文を参照する顧客 ID
+     * @param id 対象の注文 ID
+     * @returns 明細を含む注文
+     * @throws NotFoundException 注文がないか顧客本人の注文ではない場合
+     */
     async detail(userId: string, id: string) {
         const order = await this.repo.find(userId, id);
         if (!order) throw new NotFoundException('注文が見つかりません。');
         return order;
     }
 
-    /** 最新の商品価格・在庫と配送先から注文内容を組み立てる */
+    /**
+     * 最新のカートから見積もりを作り配送先と注文内容の照合値を計算する
+     *
+     * @param userId 注文する顧客の ID
+     * @param input 見積もりに使用する配送先
+     * @param db 確定処理で使用するトランザクション用クライアント
+     * @returns 明細・合計・正規化した配送先と照合値
+     * @throws BadRequestException カートが空か注文金額が上限を超える場合
+     * @throws ConflictException 非公開または在庫不足で購入できない商品がある場合
+     */
     private async quote(userId: string, input: PreviewOrderDto, db?: Prisma.TransactionClient) {
         const cart = await this.repo.cart(userId, db);
         if (!cart.length) throw new BadRequestException('カートに商品がありません。');
@@ -112,13 +136,26 @@ class OrdersService {
         return { ...(await this.quote(userId, input)), checkoutId: randomUUID() };
     }
 
-    /** 確認内容が一致する場合に在庫減算・注文保存・カート消去を確定する */
+    /**
+     * 見積もりと現在のカートが一致する場合に在庫・注文・カートの更新をまとめて確定する
+     *
+     * 同じ確認 ID を同じ顧客が再送した場合は保存済みの注文を返す
+     *
+     * @param userId 注文する顧客の ID
+     * @param input 確認 ID・照合値・配送先
+     * @returns 確定した注文と明細
+     * @throws BadRequestException カートが空か注文金額が上限を超える場合
+     * @throws ConflictException 商品を購入できないか確認内容が変わった場合。または同時更新で確定できない場合
+     */
     async place(userId: string, input: PlaceOrderDto) {
         // タイムアウト後に同じ確認 ID を再送した場合は確定済みの注文を返す
         const existingOrder = await this.repo.find(userId, input.checkoutId);
-        if (existingOrder) return existingOrder;
+        if (existingOrder) {
+            logEvent('info', 'orders.place', { reason: 'already_committed' });
+            return existingOrder;
+        }
         try {
-            return await this.repo.transact(async (db) => {
+            const order = await this.repo.transact(async (db) => {
                 const { items, total, shippingAddress, version } = await this.quote(userId, input, db);
                 if (input.version !== version) {
                     throw new ConflictException(
@@ -140,10 +177,20 @@ class OrdersService {
                 await db.cartItem.deleteMany({ where: { userId } });
                 return order;
             });
+            logEvent('info', 'orders.place', { reason: 'committed' });
+            return order;
         } catch (cause) {
             // 同じ確認 ID の別リクエストが先に確定した場合はその注文を返す
             const committed = await this.repo.find(userId, input.checkoutId);
-            if (committed) return committed;
+            if (committed) {
+                logEvent('info', 'orders.place', { reason: 'concurrent_commit' });
+                return committed;
+            }
+            const reason = cause instanceof BadRequestException ? 'invalid_cart'
+                : cause instanceof ConflictException ? 'cart_or_stock_changed'
+                : cause instanceof Prisma.PrismaClientKnownRequestError && ['P2034', 'P2002'].includes(cause.code)
+                  ? 'concurrent_update' : 'unexpected_failure';
+            logEvent(reason === 'unexpected_failure' ? 'error' : 'warn', 'orders.place', { reason });
             if (cause instanceof Prisma.PrismaClientKnownRequestError && ['P2034', 'P2002'].includes(cause.code)) {
                 throw new ConflictException('在庫またはカートが更新されました。内容を確認してください。');
             }

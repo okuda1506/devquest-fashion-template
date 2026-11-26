@@ -162,7 +162,7 @@ npm run build
 npm run grade -- task/DEV-101
 ```
 
-通常のテストは初期状態で成功します。DEV-101〜140 の40件を各チャプター10件ずつ解放します。指定ブランチは DevQuest の課題画面で確認できます。各課題の完了条件と先に完了した課題の回帰テストを GitHub Actions が実行します。未改修のテンプレートでは各課題に未達の条件があり、そのテストは失敗します。
+通常のテストは初期状態で成功します。DEV-101〜143 の43件を指定順に解放します。DEV-141〜143 は上級チャプターの最後に届きます。指定ブランチは DevQuest の課題画面で確認できます。各課題の完了条件と先に完了した課題の回帰テストを GitHub Actions が実行します。未改修のテンプレートでは各課題に未達の条件があり、そのテストは失敗します。
 
 ### 演習上の本番環境について
 
@@ -172,20 +172,32 @@ npm run grade -- task/DEV-101
 
 課題を進めるときは、DevQuest 指定のブランチに push します。採点に合格したら PR を作成して main にマージし、DevQuest で「マージを確認」を押すと次の課題が解放されます。手元で採点を実行する場合は、DB 更新を伴うため演習データと分けた使い捨ての PostgreSQL を使用してください。課題でお気に入り・履歴・通知などの従属レコードに外部キーを付ける場合は、親レコードの削除時に採点用データも片付くように `onDelete: Cascade` を設定してください。
 
+### ログを使った調査
+
+ブラウザの開発者ツールの Console と Network、または Swagger UI（`http://localhost:3001/api/docs`）のレスポンスヘッダーで `X-Thread-Request-Id` を確認します。EC・管理画面・API には同じ ID が記録されます。API 側は `npm run dev:api` の端末で ID を検索し、`http.response` の状態コードと `orders.place` や `reports.daily_sales` の理由を照合します。1行1件の JSON で表示します。
+
+API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定できます。既定は `info` で、DB の問い合わせ時間が必要な場合は `.env` で `debug` を設定して API を再起動してください。DB の SQL・引数、リクエスト本文、パスワード、トークン、配送先はログに含めません。ブラウザの成功リクエストは開発ビルドの Debug または Verbose 表示で確認できます。
+
+### 大量データと性能計測
+
+標準 Seed を投入した演習 DB に `npm run db:seed:large` を実行すると、固定 ID の商品3,000件、架空の顧客600件、受注30,000件が追加されます。売り切れ・非公開商品・大量注文・過去の注文を含みます。同じ DB で再実行しても件数は増えません。通常の CI や過去課題では標準 Seed を使います。
+
+1. `.env` をシェルで読み込んで大量 Seed を投入し、`THREAD_LOG_LEVEL=debug` で API を起動します。
+2. `npm run benchmark:sales` を実行します。最初の1回を除いた5回の中央値と、照合に使えるリクエスト ID が表示されます。
+3. ID に対応する `db.query` の行を数えます。修正後は同じ DB・設定で再計測します。毎回の応答時間には揺れがあるため、自動採点は販売点数の正確さと問い合わせ回数を検証します。
+
 ### 採点の更新（すでに演習中の場合）
 
-`thread-criteria-v1` で始めた演習リポジトリは、DEV-104 の次へ進む前に採点を更新してください。演習リポジトリの main で、作業中の変更をコミットまたは退避したうえで以下を実行します。
+新しく演習を始める場合は、THREAD の最新の `main` から演習リポジトリを作成します。旧採点版で始めた演習リポジトリでも、従来の対象課題は採点できます。既存リポジトリで DEV-141 以降を続ける場合は、作業をコミットして次の例のように上流の差分を取り込んでください。例では `thread-quests-v2` を出発点にしています。
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v2
-git restore --source=FETCH_HEAD -- .github/workflows/grade.yml grading
-git add .github/workflows/grade.yml grading
-git commit -m "40課題に対応する採点を取り込む"
-git push origin main
+git switch -c chore/thread-quests-v3
+git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v2:refs/tags/thread-quests-v2 refs/tags/thread-quests-v3:refs/tags/thread-quests-v3
+git diff --binary thread-quests-v2 thread-quests-v3 -- . ':(exclude)README.md' | git apply --3way --index
 ```
 
-更新後の main から次の作業ブランチを作ってください。DEV-101〜104 の完了記録と過去の改修を引き継げます。v1 より古い採点を使っている場合は、先に `thread-criteria-v1` 時点のアプリと採点の変更を、演習中のコードに合わせて取り込んでください。
+競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v3 と一致させます。以前の採点版では、その版から v2 までの差分も確認します。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。

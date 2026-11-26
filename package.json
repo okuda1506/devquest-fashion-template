@@ -13,6 +13,8 @@
     "db:generate": "npm run db:generate -w api",
     "db:migrate": "npm run db:migrate -w api",
     "db:seed": "npm run db:seed -w api",
+    "db:seed:large": "npm run db:seed:large -w api",
+    "benchmark:sales": "npm run benchmark:sales -w api",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "lint": "eslint web/src web/vite.config.ts admin/src admin/vite.config.ts packages/shared/src api/src api/prisma api/prisma.config.ts grading",

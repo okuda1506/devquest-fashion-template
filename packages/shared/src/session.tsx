@@ -27,7 +27,13 @@ function isSession(value: unknown, app: App): value is Session {
     );
 }
 
-/** 保存済みセッションを復元し利用できないデータを破棄する */
+/**
+ * 指定した画面のセッションをブラウザから復元する
+ *
+ * @param key 画面用途に対応するストレージキー
+ * @param app 利用する画面の用途
+ * @returns ロールと期限が有効なセッション。読み取れない場合は null
+ */
 function readSession(key: string, app: App) {
     try {
         const value: unknown = JSON.parse(localStorage.getItem(key) ?? 'null');

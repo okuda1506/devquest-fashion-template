@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api } from '@thread/shared';
 
-/** 管理画面の一覧取得・更新・エラー状態を共通化する */
+/**
+ * 管理画面の一覧取得・更新・エラー状態を共通化する
+ *
+ * @param endpoint 一覧を取得する API パス
+ * @param token 管理者のセッショントークン
+ * @returns 一覧データ・操作の状態・保存と再取得の関数
+ */
 export function useAdminList<T>(endpoint: string, token: string) {
     const [items, setItems] = useState<T[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,7 +44,15 @@ export function useAdminList<T>(endpoint: string, token: string) {
         setRevision((version) => version + 1);
     }
 
-    /** 更新 API の結果に応じて一覧と操作フィードバックを反映する */
+    /**
+     * 保存が成功した場合に一覧を取り直して操作結果を表示する
+     *
+     * @param path 更新先の API パス
+     * @param method 登録または部分更新の HTTP メソッド
+     * @param values 送信するフォーム値
+     * @param success 成功時の画面メッセージ
+     * @returns 更新に成功した場合に true
+     */
     async function save(path: string, method: 'POST' | 'PATCH', values: object, success: string) {
         setMessage('');
         setSaveError('');

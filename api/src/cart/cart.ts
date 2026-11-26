@@ -59,7 +59,12 @@ class CartRepository {
     remove(userId: string, productId: string) {
         return this.db.cartItem.deleteMany({ where: { userId, productId } });
     }
-    /** カート数量の読み取りと更新を直列化可能な分離レベルで実行する */
+    /**
+     * カート数量の読み取りと更新を同じ直列化可能トランザクションで処理する
+     *
+     * @param process トランザクション用クライアントを使う処理
+     * @returns コミットされた処理の結果
+     */
     transact<T>(process: (db: Prisma.TransactionClient) => Promise<T>) {
         return this.db.$transaction(process, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     }
@@ -74,12 +79,31 @@ class CartService {
     list(userId: string) {
         return this.repo.list(userId);
     }
-    /** 公開商品であることを確認してカート数量を指定値に変更する */
+    /**
+     * 公開商品であることを確認してカート数量を指定値に置き換える
+     *
+     * @param userId カートの所有者
+     * @param id 対象商品の ID
+     * @param qty 更新後の数量
+     * @returns 作成または更新されたカート明細
+     * @throws NotFoundException 公開中の対象商品が存在しない場合
+     */
     async put(userId: string, id: string, qty: number) {
         if (!(await this.repo.findProduct(id))) throw new NotFoundException('商品が見つかりません。');
         return this.repo.put(userId, id, qty);
     }
-    /** 現在の数量に加算して在庫数とカート上限を両方守る */
+    /**
+     * 現在の数量に加算して在庫数とカート上限を両方守る
+     *
+     * 同時更新による直列化競合または一意制約違反は最大3回まで試行する
+     *
+     * @param userId カートの所有者
+     * @param productId 追加対象の商品 ID
+     * @param quantity 現在の数量へ加算する点数
+     * @returns 更新されたカート明細
+     * @throws NotFoundException 公開中の対象商品が存在しない場合
+     * @throws ConflictException 在庫不足・数量上限超過・同時更新で追加できない場合
+     */
     async add(userId: string, productId: string, quantity: number) {
         for (let attempt = 0; attempt < 3; attempt += 1) {
             try {
@@ -106,7 +130,13 @@ class CartService {
         }
         throw new ConflictException('カートが更新されました。もう一度追加してください。');
     }
-    /** 明細の有無にかかわらず削除済みとして応答する */
+    /**
+     * 指定商品の明細をカートから取り除く
+     *
+     * @param userId カートの所有者
+     * @param id 削除対象の商品 ID
+     * @returns 明細の有無にかかわらず removed が true の結果
+     */
     async remove(userId: string, id: string) {
         await this.repo.remove(userId, id);
         return { removed: true };
