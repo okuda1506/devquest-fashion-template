@@ -47,18 +47,21 @@ export class ProductsRepository {
     detail(id: string) {
         return this.db.product.findFirst({ where: { id, isPublished: true } });
     }
+
     /**
      * 非公開を含む全商品を商品 ID 順で取得する
      */
     adminList() {
         return this.db.product.findMany({ orderBy: { id: 'asc' } });
     }
+
     /**
      * 商品 ID を採番して初期在庫と商品情報を保存する
      */
     create({ stock = 0, ...data }: CreateProduct) {
         return this.db.product.create({ data: { id: randomUUID(), stock, ...data } });
     }
+
     /**
      * 指定商品に入力された変更項目だけを反映する
      */

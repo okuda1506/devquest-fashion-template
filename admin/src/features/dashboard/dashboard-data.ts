@@ -46,6 +46,7 @@ export function summarizeOrders(orders: readonly Order[], period: DayCount, now 
         if (order.status === 'PLACED') pending += 1;
         else if (order.status === 'SHIPPED') shipped += 1;
     }
+
     return { days, orders: pending + shipped, revenue, pending, shipped };
 }
 

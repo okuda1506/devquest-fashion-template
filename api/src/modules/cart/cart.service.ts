@@ -13,12 +13,14 @@ export class CartService {
      * カート操作とトランザクションに使うリポジトリを受け取る
      */
     constructor(private readonly repo: CartRepository) {}
+
     /**
      * 指定ユーザーのカート明細を返す
      */
     list(userId: string) {
         return this.repo.list(userId);
     }
+
     /**
      * 公開商品であることを確認してカート数量を指定値に置き換える
      *
@@ -32,6 +34,7 @@ export class CartService {
         if (!(await this.repo.findProduct(id))) throw new NotFoundException(productMessages.notFound);
         return this.repo.put(userId, id, qty);
     }
+
     /**
      * 現在の数量に加算して在庫数とカート上限を両方守る
      *
@@ -50,9 +53,11 @@ export class CartService {
                 return await this.repo.transact(async (db) => {
                     const product = await this.repo.findProduct(productId, db);
                     if (!product) throw new NotFoundException(productMessages.notFound);
+
                     const current = await db.cartItem.findUnique({
                         where: { userId_productId: { userId, productId } }
                     });
+
                     const next = (current?.quantity ?? 0) + quantity;
                     if (next > Math.min(product.stock, MAX_CART_QUANTITY)) {
                         throw new ConflictException('在庫またはカートの上限を超える数量は追加できません。');
@@ -64,8 +69,10 @@ export class CartService {
                 if (!isConflictingWrite(cause)) throw cause;
             }
         }
+
         throw new ConflictException('カートが更新されました。もう一度追加してください。');
     }
+
     /**
      * 指定商品の明細をカートから取り除く
      *

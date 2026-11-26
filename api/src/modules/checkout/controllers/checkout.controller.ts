@@ -27,6 +27,7 @@ export class CheckoutController {
     @Post('preview') preview(@CurrentUser() user: { id: string }, @Body() input: PreviewOrderDto) {
         return this.checkout.preview(user.id, input);
     }
+
     /**
      * 確認時の識別子とバージョンを使って注文を確定する
      */

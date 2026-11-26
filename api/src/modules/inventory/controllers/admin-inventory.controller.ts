@@ -18,6 +18,7 @@ export class AdminInventoryController {
      * 在庫更新を実行するサービスを受け取る
      */
     constructor(private readonly inventory: InventoryService) {}
+
     /**
      * 商品 ID と入力値を使って在庫数の更新を依頼する
      */

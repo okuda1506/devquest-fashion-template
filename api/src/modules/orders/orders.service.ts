@@ -12,18 +12,21 @@ export class OrdersService {
      * 注文参照と更新に使うリポジトリを受け取る
      */
     constructor(private readonly repo: OrdersRepository) {}
+
     /**
      * 対象顧客の注文履歴を返す
      */
     list(userId?: string) {
         return this.repo.list(userId);
     }
+
     /**
      * 顧客情報付きの受注データを管理画面に返す
      */
     adminList() {
         return this.repo.adminList();
     }
+
     /**
      * 既存注文の発送ステータスを変更する
      *
@@ -36,6 +39,7 @@ export class OrdersService {
         if (!(await this.repo.update(id, status)).count) throw new NotFoundException(orderMessages.notFound);
         return { updated: true };
     }
+
     /**
      * 注文 ID を指定して対象顧客の注文だけを取得する
      *

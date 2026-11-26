@@ -19,18 +19,21 @@ export class AdminProductsController {
      * 商品マスタを管理するサービスを受け取る
      */
     constructor(private readonly products: ProductsService) {}
+
     /**
      * 非公開の商品を含めて商品マスタを列挙する
      */
     @Get() list() {
         return this.products.adminList();
     }
+
     /**
      * 管理用フォームから新しい商品を登録する
      */
     @Post() create(@Body() dto: CreateProduct) {
         return this.products.create(dto);
     }
+
     /**
      * 商品マスタの入力済み項目を更新する
      */
