@@ -178,7 +178,7 @@ API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定で�
 
 ### 大量データと性能計測
 
-標準 Seed（商品500件）を投入した演習 DB に `npm run db:seed:large` を実行すると、固定 ID の商品3,000件、架空の顧客600件、受注30,000件が追加されます。売り切れ・非公開商品・大量注文・過去の注文を含みます。同じ DB で再実行しても件数は増えません。通常の CI や過去課題では標準 Seed を使います。
+標準 Seed（商品1,488件）を投入した演習 DB に `npm run db:seed:large` を実行すると、固定 ID の商品3,000件、架空の顧客600件、受注30,000件が追加されます。売り切れ・非公開商品・大量注文・過去の注文を含みます。同じ DB で再実行しても件数は増えません。通常の CI や過去課題では標準 Seed を使います。
 
 1. `.env` をシェルで読み込んで大量 Seed を投入し、`THREAD_LOG_LEVEL=debug` で API を起動します。
 2. `npm run benchmark:sales` を実行します。最初の1回を除いた5回の中央値と、照合に使えるリクエスト ID が表示されます。
@@ -186,16 +186,16 @@ API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定で�
 
 ### 採点の更新（すでに演習中の場合）
 
-新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。商品拡充版は採点タグ `thread-quests-v5` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v4 からの移行例です。
+新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。商品拡充版は採点タグ `thread-quests-v6` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v4 からの移行例です。
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git switch -c chore/thread-quests-v5
-git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v4:refs/tags/thread-quests-v4 refs/tags/thread-quests-v5:refs/tags/thread-quests-v5
-git diff --binary thread-quests-v4 thread-quests-v5 -- . ':(exclude)README.md' | git apply --3way --index
+git switch -c chore/thread-quests-v6
+git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v4:refs/tags/thread-quests-v4 refs/tags/thread-quests-v6:refs/tags/thread-quests-v6
+git diff --binary thread-quests-v4 thread-quests-v6 -- . ':(exclude)README.md' | git apply --3way --index
 ```
 
-競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v5 と一致させます。旧版からは先に v4 までの差分を取り込みます。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
+競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v6 と一致させます。旧版からは先に v4 までの差分を取り込みます。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。

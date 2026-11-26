@@ -17,18 +17,30 @@ const models = styles.flatMap(({ category, price, names }) =>
     names.map((name, index) => ({ category, name, price: price + index * 500 }))
 );
 
+const collections = ['', 'スタジオ', 'ウィークエンド'] as const;
+
 /**
- * 定番6件に追加する38型・13色の演習用商品を固定IDで作成する
+ * 定番6件に追加する3コレクション・38型・13色の商品を固定IDで作成する
  */
 export function developmentCatalog() {
-    return models.flatMap(({ category, name, price }, modelIndex) =>
-        colors.map((color, colorIndex) => ({
-            id: `thread-catalog-${String(colorIndex * models.length + modelIndex + 1).padStart(3, '0')}`,
-            category,
-            name: `${name} / ${color}`,
-            description: `${name}の${color}カラー。デイリーコレクションの定番モデル。`,
-            price,
-            stock: (modelIndex * 11 + colorIndex * 7) % 48
-        }))
+    const collectionSize = models.length * colors.length;
+
+    return collections.flatMap((collection, collectionIndex) =>
+        models.flatMap(({ category, name, price }, modelIndex) =>
+            colors.map((color, colorIndex) => {
+                const number = collectionIndex * collectionSize + colorIndex * models.length + modelIndex + 1;
+                const productName = collection ? `${collection} ${name}` : name;
+
+                return {
+                    id: `thread-catalog-${String(number).padStart(3, '0')}`,
+                    category,
+                    name: `${productName} / ${color}`,
+                    description: `${productName}の${color}カラー。`,
+                    price: price + collectionIndex * 500,
+                    stock: (modelIndex * 11 + colorIndex * 7 + collectionIndex * 3) % 48,
+                    isPublished: collectionIndex === 0 || number % 10 !== 0
+                };
+            })
+        )
     );
 }
