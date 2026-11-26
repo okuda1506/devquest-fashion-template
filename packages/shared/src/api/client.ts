@@ -1,6 +1,6 @@
+import { connectionMessage, requestFailedMessage } from './api-messages';
+
 const requestIdHeader = 'X-Thread-Request-Id';
-const connectionMessage = 'API に接続できませんでした。';
-const requestFailedMessage = '処理に失敗しました。';
 
 /**
  * API の HTTP ステータスと応答コードを保持する

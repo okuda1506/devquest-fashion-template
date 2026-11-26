@@ -8,5 +8,3 @@ export const audiences = { CUSTOMER: 'thread-store', ADMIN: 'thread-admin' } sat
 export const issuer = 'thread-api';
 
 export const sessionLifetimeSeconds = 60 * 60;
-
-export const loginDenied = 'メールアドレスまたはパスワードが正しくありません。';

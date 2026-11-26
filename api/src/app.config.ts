@@ -4,6 +4,7 @@ import { allowedOrigins } from './config/environment';
 import { SafeExceptionFilter } from './common/filters/safe-exception.filter';
 import { requestIdHeader } from './common/logging/log-events';
 import { traceRequest } from './common/logging/request-logger.middleware';
+import { httpMessages } from './common/http-messages';
 
 /** API の共通パス・CORS・入力検証・OpenAPI を構成する */
 export function configure(app: INestApplication) {
@@ -21,7 +22,7 @@ export function configure(app: INestApplication) {
             transform: true,
             whitelist: true,
             forbidNonWhitelisted: true,
-            exceptionFactory: () => new BadRequestException('入力内容が正しくありません。')
+            exceptionFactory: () => new BadRequestException(httpMessages.invalidInput)
         })
     );
     const config = new DocumentBuilder()

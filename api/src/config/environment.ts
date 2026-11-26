@@ -1,3 +1,5 @@
+import { environmentMessages } from './environment-messages';
+
 export const logLevels = { debug: 0, info: 1, warn: 2, error: 3 } as const;
 export type LogLevel = keyof typeof logLevels;
 
@@ -7,23 +9,21 @@ export type Surface = keyof typeof frontendPorts;
 export function apiPort() {
     const port = Number(process.env.THREAD_PORT ?? 3001);
     if (!Number.isInteger(port) || port < 0 || port > 65535) {
-        throw new Error('THREAD_PORT に0〜65535の整数を指定してください。');
+        throw new Error(environmentMessages.invalidPort);
     }
     return port;
 }
 
 export function databaseUrl() {
     const url = process.env.DATABASE_URL;
-    if (!url) throw new Error('DATABASE_URL を指定してください。');
+    if (!url) throw new Error(environmentMessages.databaseRequired);
     return url;
 }
 
 export function jwtSecret() {
     const secret = process.env.THREAD_JWT_SECRET;
     if (!secret || secret.length < 32) {
-        throw new Error(
-            'リポジトリ直下の .env または環境変数の THREAD_JWT_SECRET に32文字以上の値を設定し、API を再起動してください。'
-        );
+        throw new Error(environmentMessages.invalidJwtSecret);
     }
     return secret;
 }

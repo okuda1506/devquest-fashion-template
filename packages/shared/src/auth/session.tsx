@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { api, rejectedSessions } from '../api/client';
+import { sessionMessages } from './session-messages';
 
 const roles = { store: 'CUSTOMER', admin: 'ADMIN' } as const;
 type App = keyof typeof roles;
@@ -137,7 +138,7 @@ export function SessionProvider({ app, children }: { app: App; children: ReactNo
             method: 'POST',
             body: JSON.stringify({ email, password })
         });
-        if (!isSession(next, app)) throw new Error('ログインできませんでした。');
+        if (!isSession(next, app)) throw new Error(sessionMessages.invalidLoginResponse);
         try {
             localStorage.setItem(storageKey, JSON.stringify(next));
         } catch {

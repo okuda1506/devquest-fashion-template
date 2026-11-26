@@ -3,6 +3,7 @@ import { BaseExceptionFilter } from '@nestjs/core';
 import type { ServerResponse } from 'node:http';
 import { logEvents } from '../logging/log-events';
 import { logEvent } from '../logging/logger';
+import { httpMessages } from '../http-messages';
 
 /**
  * 未処理の例外の本文やスタックを出力せずに汎用の 500 応答を返す
@@ -24,6 +25,6 @@ export class SafeExceptionFilter extends BaseExceptionFilter {
             return;
         }
         response.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        response.end(JSON.stringify({ statusCode: 500, message: 'Internal server error' }));
+        response.end(JSON.stringify({ statusCode: 500, message: httpMessages.internalError }));
     }
 }

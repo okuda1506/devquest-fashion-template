@@ -6,6 +6,7 @@ import type { Role } from '../../generated/prisma/client';
 import { allowedOrigins } from '../../config/environment';
 import type { AuthRequest } from '../../modules/auth/auth.types';
 import { audiences, issuer, sessionLifetimeSeconds } from '../../modules/auth/auth.config';
+import { authMessages } from '../../modules/auth/auth-messages';
 
 /**
  * 署名・有効期限・利用先・権限に基づいて API のアクセスを制御する
@@ -32,7 +33,7 @@ export class AuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext) {
         const request = context.switchToHttp().getRequest<AuthRequest>();
         const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1];
-        if (!token) throw new UnauthorizedException('ログインしてください。');
+        if (!token) throw new UnauthorizedException(authMessages.loginRequired);
         const payload = await this.jwt
             .verifyAsync<{ sub: string; aud: string; exp: number }>(token, {
                 issuer,
@@ -41,19 +42,19 @@ export class AuthGuard implements CanActivate {
             })
             .catch(() => null);
         if (typeof payload?.sub !== 'string' || typeof payload.exp !== 'number') {
-            throw new UnauthorizedException('再度ログインしてください。');
+            throw new UnauthorizedException(authMessages.sessionExpired);
         }
         const viewer = await this.accounts.findViewer(payload.sub);
         if (!viewer || payload.aud !== audiences[viewer.role])
-            throw new UnauthorizedException('再度ログインしてください。');
+            throw new UnauthorizedException(authMessages.sessionExpired);
         const required = this.reflector.getAllAndOverride<Role>('requiredRole', [
             context.getHandler(),
             context.getClass()
         ]);
-        if (viewer.role !== required) throw new ForbiddenException('この操作を利用する権限がありません。');
+        if (viewer.role !== required) throw new ForbiddenException(authMessages.forbidden);
         const origin = request.headers.origin;
         if (origin !== undefined && !allowedOrigins(viewer.role === 'ADMIN' ? 'admin' : 'store').includes(origin)) {
-            throw new ForbiddenException('この操作を利用する権限がありません。');
+            throw new ForbiddenException(authMessages.forbidden);
         }
         request.viewer = viewer;
         return true;
