@@ -27,10 +27,10 @@ beforeAll(async () => {
         update: { stock: 2, price: 3000 },
         create: { id: sku, name: '注文検証用商品', category: 'tops', description: '', price: 3000, stock: 2 }
     });
-    const user = await db.user.upsert({
+    const user = await db.customer.upsert({
         where: { email },
         update: {},
-        create: { email, name: 'API テスト用ユーザー', passwordHash: hashPassword('thread-check') }
+        create: { email, lastName: 'API テスト用ユーザー', passwordHash: hashPassword('thread-check') }
     });
     id = user.id;
     shopper = (
@@ -49,8 +49,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
     if (db && id) {
-        await db.order.deleteMany({ where: { userId: id } });
-        await db.user.delete({ where: { id } });
+        await db.order.deleteMany({ where: { customerId: id } });
+        await db.customer.delete({ where: { id } });
         await db.product.delete({ where: { id: sku } });
     }
     await app?.close();
@@ -130,7 +130,7 @@ test('配送先と確認済みの商品・金額でのみ注文を確定し、�
     expect(order.body.shippingAddress).toEqual(fresh.shippingAddress);
     expect(retry.body.id).toBe(order.body.id);
     expect((await place(fresh).expect(201)).body.id).toBe(order.body.id);
-    expect(await db.order.count({ where: { userId: id } })).toBe(1);
+    expect(await db.order.count({ where: { customerId: id } })).toBe(1);
     expect((await db.product.findUniqueOrThrow({ where: { id: sku } })).stock).toBe(0);
     expect((await request(server).get('/api/cart').auth(shopper, { type: 'bearer' }).expect(200)).body).toEqual([]);
     await request(server)
@@ -245,4 +245,24 @@ test('用途の異なるセッション、期限切れトークン、無許可�
         .expect('Access-Control-Allow-Origin', 'http://localhost:5175');
     const other = await request(server).get('/api/products').set('Origin', 'http://localhost:9999').expect(200);
     expect(other.headers['access-control-allow-origin']).toBeUndefined();
+});
+
+test('同じメールアドレスでも店舗担当者と購入者は個別に認証される', async () => {
+    const server = app.getHttpServer();
+    await db.member.create({
+        data: { email, lastName: '管理', firstName: '太郎', passwordHash: hashPassword('thread-member-check') }
+    });
+    try {
+        const store = (password: string) => request(server).post('/api/auth/store/login').send({ email, password });
+        const manage = (password: string) => request(server).post('/api/auth/admin/login').send({ email, password });
+        expect((await store('thread-check').expect(201)).body.role).toBe('CUSTOMER');
+        expect((await manage('thread-member-check').expect(201)).body).toMatchObject({
+            name: '管理 太郎',
+            role: 'ADMIN'
+        });
+        await store('thread-member-check').expect(401);
+        await manage('thread-check').expect(401);
+    } finally {
+        await db.member.delete({ where: { email } });
+    }
 });

@@ -15,9 +15,9 @@ export class CartRepository {
     /**
      * 商品情報付きのカート明細を商品 ID 順に取得する
      */
-    list(userId: string) {
+    list(customerId: string) {
         return this.db.cartItem.findMany({
-            where: { userId },
+            where: { customerId },
             include: { product: true },
             orderBy: { productId: 'asc' }
         });
@@ -34,23 +34,23 @@ export class CartRepository {
      * ユーザーと商品の複合キーで明細の数量を設定する
      */
     put(
-        userId: string,
+        customerId: string,
         productId: string,
         quantity: number,
         source: Pick<Prisma.TransactionClient, 'cartItem'> = this.db
     ) {
         return source.cartItem.upsert({
-            where: { userId_productId: { userId, productId } },
+            where: { customerId_productId: { customerId, productId } },
             update: { quantity },
-            create: { userId, productId, quantity }
+            create: { customerId, productId, quantity }
         });
     }
 
     /**
      * 対象のユーザーと商品に一致する明細を削除する
      */
-    remove(userId: string, productId: string) {
-        return this.db.cartItem.deleteMany({ where: { userId, productId } });
+    remove(customerId: string, productId: string) {
+        return this.db.cartItem.deleteMany({ where: { customerId, productId } });
     }
 
     /**

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
+import { shippingAddressFields } from '../orders/order-shipping-address';
 import type { CheckoutItem } from './checkout-quote';
 
 /**
@@ -16,9 +17,9 @@ export class CheckoutRepository {
     /**
      * 見積もりに必要な商品情報付きのカート明細を取得する
      */
-    cart(userId: string, source: Pick<Prisma.TransactionClient, 'cartItem'> = this.db) {
+    cart(customerId: string, source: Pick<Prisma.TransactionClient, 'cartItem'> = this.db) {
         return source.cartItem.findMany({
-            where: { userId },
+            where: { customerId },
             include: { product: true },
             orderBy: { productId: 'asc' }
         });
@@ -45,13 +46,13 @@ export class CheckoutRepository {
      * 確認 ID を注文 ID として明細と配送先を保存する
      */
     createOrder(data: Prisma.OrderUncheckedCreateInput, db: Prisma.TransactionClient) {
-        return db.order.create({ data, include: { items: true } });
+        return db.order.create({ data, include: { items: true, shippingAddress: { select: shippingAddressFields } } });
     }
 
     /**
      * 確定済みのカート明細を削除する
      */
-    clearCart(userId: string, db: Prisma.TransactionClient) {
-        return db.cartItem.deleteMany({ where: { userId } });
+    clearCart(customerId: string, db: Prisma.TransactionClient) {
+        return db.cartItem.deleteMany({ where: { customerId } });
     }
 }

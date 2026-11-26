@@ -48,14 +48,15 @@ async function seedLarge(db: PrismaService) {
     const passwordHash = hashPassword(randomBytes(32).toString('hex'));
     const customers = Array.from({ length: customerCount }, (_, index) => ({
         id: seedId('customer', index),
-        name: '演習用顧客 ' + (index + 1),
+        lastName: '演習用顧客',
+        firstName: String(index + 1),
         email: `large-seed-${index}@example.test`,
         passwordHash
     }));
     await db.$transaction(
         async (tx) => {
             await tx.product.createMany({ data: products, skipDuplicates: true });
-            await tx.user.createMany({ data: customers, skipDuplicates: true });
+            await tx.customer.createMany({ data: customers, skipDuplicates: true });
             for (let offset = 0; offset < orderCount; offset += 500) {
                 const batch = Array.from({ length: 500 }, (_, row) => {
                     const index = offset + row;
@@ -75,7 +76,7 @@ async function seedLarge(db: PrismaService) {
                     return {
                         order: {
                             id,
-                            userId: customers[next(customerCount)].id,
+                            customerId: customers[next(customerCount)].id,
                             status: age > 14 || next(3) === 0 ? ('SHIPPED' as const) : ('PLACED' as const),
                             createdAt: new Date(start + age * 86400000 + next(86400000)),
                             total: items.reduce((total, item) => total + item.unitPrice * item.quantity, 0)

@@ -27,15 +27,15 @@ export class CheckoutService {
     /**
      * 最新のカートから見積もりを作り配送先と注文内容の照合値を計算する
      *
-     * @param userId 注文する顧客の ID
+     * @param customerId 注文する顧客の ID
      * @param input 見積もりに使用する配送先
      * @param db 確定処理で使用するトランザクション用クライアント
      * @returns 明細・合計・正規化した配送先と照合値
      * @throws BadRequestException カートが空か注文金額が上限を超える場合
      * @throws ConflictException 非公開または在庫不足で購入できない商品がある場合
      */
-    private async quote(userId: string, input: PreviewOrderDto, db?: Prisma.TransactionClient) {
-        const cart = await this.repo.cart(userId, db);
+    private async quote(customerId: string, input: PreviewOrderDto, db?: Prisma.TransactionClient) {
+        const cart = await this.repo.cart(customerId, db);
         if (!cart.length) throw new BadRequestException(checkoutMessages.emptyCart);
         const items = cart.map(({ product, quantity }) => {
             if (!product.isPublished || product.stock < quantity) {
@@ -55,8 +55,8 @@ export class CheckoutService {
     /**
      * 注文内容と確定リクエストの再送に使う識別子を返す
      */
-    async preview(userId: string, input: PreviewOrderDto) {
-        return { ...(await this.quote(userId, input)), checkoutId: randomUUID() };
+    async preview(customerId: string, input: PreviewOrderDto) {
+        return { ...(await this.quote(customerId, input)), checkoutId: randomUUID() };
     }
 
     /**
@@ -64,22 +64,22 @@ export class CheckoutService {
      *
      * 同じ確認 ID を同じ顧客が再送した場合は保存済みの注文を返す
      *
-     * @param userId 注文する顧客の ID
+     * @param customerId 注文する顧客の ID
      * @param input 確認 ID・照合値・配送先
      * @returns 確定した注文と明細
      * @throws BadRequestException カートが空か注文金額が上限を超える場合
      * @throws ConflictException 商品を購入できないか確認内容が変わった場合。または同時更新で確定できない場合
      */
-    async place(userId: string, input: PlaceOrderDto) {
+    async place(customerId: string, input: PlaceOrderDto) {
         // タイムアウト後に同じ確認 ID を再送した場合は確定済みの注文を返す
-        const existingOrder = await this.orders.find(userId, input.checkoutId);
+        const existingOrder = await this.orders.find(customerId, input.checkoutId);
         if (existingOrder) {
             logEvent('info', logEvents.orderPlaced, { reason: 'already_committed' });
             return existingOrder;
         }
         try {
             const order = await this.repo.transact(async (db) => {
-                const { items, total, shippingAddress, version } = await this.quote(userId, input, db);
+                const { items, total, shippingAddress, version } = await this.quote(customerId, input, db);
                 if (input.version !== version) {
                     throw checkoutConflict('CHECKOUT_CHANGED', checkoutMessages.changed);
                 }
@@ -90,17 +90,23 @@ export class CheckoutService {
                         throw checkoutConflict('INSUFFICIENT_STOCK', checkoutMessages.insufficientStock(item.name));
                 }
                 const order = await this.repo.createOrder(
-                    { id: input.checkoutId, userId, total, shippingAddress, items: { create: items } },
+                    {
+                        id: input.checkoutId,
+                        customerId,
+                        total,
+                        shippingAddress: { create: shippingAddress },
+                        items: { create: items }
+                    },
                     db
                 );
-                await this.repo.clearCart(userId, db);
+                await this.repo.clearCart(customerId, db);
                 return order;
             });
             logEvent('info', logEvents.orderPlaced, { reason: 'committed' });
             return order;
         } catch (cause) {
             // 同じ確認 ID の別リクエストが先に確定した場合はその注文を返す
-            const committed = await this.orders.find(userId, input.checkoutId);
+            const committed = await this.orders.find(customerId, input.checkoutId);
             if (committed) {
                 logEvent('info', logEvents.orderPlaced, { reason: 'concurrent_commit' });
                 return committed;

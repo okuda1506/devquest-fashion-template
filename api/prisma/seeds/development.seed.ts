@@ -61,19 +61,18 @@ async function seed() {
     await db.product.createMany({ data: developmentCatalog(), skipDuplicates: true });
 
     // 既存アカウントを変更せず、EC サイト専用の顧客を初期登録する。
-    const customer = await db.user.upsert({
+    const customer = await db.customer.upsert({
         where: { email: 'customer@example.test' },
-        create: { email: 'customer@example.test', name: '山田 花子', passwordHash: hashPassword('thread-customer') },
+        create: { email: 'customer@example.test', lastName: '山田', firstName: '花子', passwordHash: hashPassword('thread-customer') },
         update: {}
     });
     // 管理画面専用の運営アカウント。
-    await db.user.upsert({
+    await db.member.upsert({
         where: { email: 'admin@example.test' },
         create: {
             email: 'admin@example.test',
-            name: '店舗管理者',
-            passwordHash: hashPassword('thread-admin'),
-            role: 'ADMIN'
+            lastName: '店舗管理者',
+            passwordHash: hashPassword('thread-admin')
         },
         update: {}
     });
@@ -81,7 +80,7 @@ async function seed() {
         where: { id: 'demo-order' },
         create: {
             id: 'demo-order',
-            userId: customer.id,
+            customerId: customer.id,
             total: 3900,
             status: 'SHIPPED',
             items: { create: { productId: 'canvas-tote', name: 'キャンバストート', unitPrice: 3900, quantity: 1 } }

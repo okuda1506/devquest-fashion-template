@@ -18,22 +18,22 @@ export class CartService {
     /**
      * 指定ユーザーのカート明細を返す
      */
-    list(userId: string) {
-        return this.repo.list(userId);
+    list(customerId: string) {
+        return this.repo.list(customerId);
     }
 
     /**
      * 公開商品であることを確認してカート数量を指定値に置き換える
      *
-     * @param userId カートの所有者
+     * @param customerId カートの所有者
      * @param id 対象商品の ID
      * @param qty 更新後の数量
      * @returns 作成または更新されたカート明細
      * @throws NotFoundException 公開中の対象商品が存在しない場合
      */
-    async put(userId: string, id: string, qty: number) {
+    async put(customerId: string, id: string, qty: number) {
         if (!(await this.repo.findProduct(id))) throw new NotFoundException(productMessages.notFound);
-        return this.repo.put(userId, id, qty);
+        return this.repo.put(customerId, id, qty);
     }
 
     /**
@@ -41,14 +41,14 @@ export class CartService {
      *
      * 同時更新による直列化競合または一意制約違反は最大3回まで試行する
      *
-     * @param userId カートの所有者
+     * @param customerId カートの所有者
      * @param productId 追加対象の商品 ID
      * @param quantity 現在の数量へ加算する点数
      * @returns 更新されたカート明細
      * @throws NotFoundException 公開中の対象商品が存在しない場合
      * @throws ConflictException 在庫不足・数量上限超過・同時更新で追加できない場合
      */
-    async add(userId: string, productId: string, quantity: number) {
+    async add(customerId: string, productId: string, quantity: number) {
         for (let attempt = 0; attempt < 3; attempt += 1) {
             try {
                 return await this.repo.transact(async (db) => {
@@ -56,14 +56,14 @@ export class CartService {
                     if (!product) throw new NotFoundException(productMessages.notFound);
 
                     const current = await db.cartItem.findUnique({
-                        where: { userId_productId: { userId, productId } }
+                        where: { customerId_productId: { customerId, productId } }
                     });
 
                     const next = (current?.quantity ?? 0) + quantity;
                     if (next > Math.min(product.stock, MAX_CART_QUANTITY)) {
                         throw new ConflictException(cartMessages.quantityLimit);
                     }
-                    return this.repo.put(userId, productId, next, db);
+                    return this.repo.put(customerId, productId, next, db);
                 });
             } catch (cause) {
                 // 同時追加で起きる直列化競合と複合キー重複だけを再試行する
@@ -77,12 +77,12 @@ export class CartService {
     /**
      * 指定商品の明細をカートから取り除く
      *
-     * @param userId カートの所有者
+     * @param customerId カートの所有者
      * @param id 削除対象の商品 ID
      * @returns 明細の有無にかかわらず removed が true の結果
      */
-    async remove(userId: string, id: string) {
-        await this.repo.remove(userId, id);
+    async remove(customerId: string, id: string) {
+        await this.repo.remove(customerId, id);
         return { removed: true };
     }
 }

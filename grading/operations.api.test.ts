@@ -44,7 +44,7 @@ beforeAll(async () => {
         .send({ email: 'customer@example.test', password: 'thread-customer' })
         .expect(201);
     customer = customerLogin.body.token;
-    const owner = await db.user.findUniqueOrThrow({ where: { email: 'customer@example.test' } });
+    const owner = await db.customer.findUniqueOrThrow({ where: { email: 'customer@example.test' } });
     await db.product.createMany({
         data: Array.from({ length: 25 }, (_, index) => ({
             id: productId(index),
@@ -65,7 +65,7 @@ beforeAll(async () => {
         await db.order.create({
             data: {
                 id: fixture + suffix,
-                userId: owner.id,
+                customerId: owner.id,
                 createdAt: new Date(createdAt),
                 total,
                 status,

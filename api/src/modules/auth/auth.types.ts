@@ -1,4 +1,4 @@
-import type { Role } from '../../generated/prisma/client';
+import type { Role } from './auth.config';
 
 type Viewer = { id: string; role: Role };
 

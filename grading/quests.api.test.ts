@@ -78,8 +78,8 @@ beforeEach(async () => {
     prefix = 'quest-' + randomUUID();
     async function account(suffix: string) {
         const email = prefix + suffix + '@example.test';
-        const { id } = await db.user.create({
-            data: { email, name: '演習の顧客', passwordHash: hashPassword('thread-quest') }
+        const { id } = await db.customer.create({
+            data: { email, lastName: '演習の顧客', passwordHash: hashPassword('thread-quest') }
         });
         const { body } = await http()
             .post('/api/auth/store/login')
@@ -92,11 +92,11 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-    const where = { userId: { in: [user, other] } };
+    const where = { customerId: { in: [user, other] } };
     await db.cartItem.deleteMany({ where });
     await db.order.deleteMany({ where });
     await db.product.deleteMany({ where: { id: { startsWith: prefix } } });
-    await db.user.deleteMany({ where: { id: where.userId } });
+    await db.customer.deleteMany({ where: { id: where.customerId } });
 });
 
 afterAll(async () => {
@@ -116,7 +116,7 @@ async function order(
     await db.order.create({
         data: {
             id,
-            userId: options.owner ?? user,
+            customerId: options.owner ?? user,
             total: 1000,
             status: options.shipped ? 'SHIPPED' : 'PLACED',
             createdAt: options.createdAt,
@@ -386,7 +386,7 @@ criteria(130, {
         expect((await adminOrder(id).expect(200)).body).toMatchObject({
             id,
             items: [{ productId: item, unitPrice: 500, quantity: 2 }],
-            user: { name: '演習の顧客', email: prefix + '-b@example.test' }
+            user: { lastName: '演習の顧客', email: prefix + '-b@example.test' }
         });
     },
     2: async () => {
@@ -423,7 +423,7 @@ criteria(108, {
     2: async () => {
         const { a, quote } = await checkoutFixture();
         expect((await place(quote).expect(409)).body).toMatchObject({ code: 'INSUFFICIENT_STOCK', productIds: [a] });
-        expect(await db.order.count({ where: { userId: user } })).toBe(0);
+        expect(await db.order.count({ where: { customerId: user } })).toBe(0);
     },
     3: async () => {
         const { a, b, quote } = await checkoutFixture();
@@ -532,7 +532,7 @@ criteria(111, {
             { after: 8, operatorId: expect.any(String), createdAt: expect.any(String) },
             { after: 7 }
         ]);
-        const operator = await db.user.findUniqueOrThrow({ where: { email: 'admin@example.test' } });
+        const operator = await db.member.findUniqueOrThrow({ where: { email: 'admin@example.test' } });
         expect(body[0].operatorId).toBe(operator.id);
         expect(Date.parse(body[0].createdAt)).toBeGreaterThanOrEqual(Date.parse(body[1].createdAt));
     },

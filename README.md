@@ -184,18 +184,20 @@ API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定で�
 2. `npm run benchmark:sales` を実行します。最初の1回を除いた5回の中央値と、照合に使えるリクエスト ID が表示されます。
 3. ID に対応する `db.query` の行を数えます。修正後は同じ DB・設定で再計測します。毎回の応答時間には揺れがあるため、自動採点は販売点数の正確さと問い合わせ回数を検証します。
 
+既存の開発 DB を更新するときは `npm run db:generate` と `npm run db:migrate` を実行します。アカウントの ID・メール・パスワードハッシュ、注文、カート、配送先を引き継ぎます。
+
 ### 採点の更新（すでに演習中の場合）
 
-新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。商品拡充版は採点タグ `thread-quests-v6` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v4 からの移行例です。
+新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。顧客・店舗管理アカウント分離版は採点タグ `thread-quests-v7` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v4 からの移行例です。
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git switch -c chore/thread-quests-v6
-git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v4:refs/tags/thread-quests-v4 refs/tags/thread-quests-v6:refs/tags/thread-quests-v6
-git diff --binary thread-quests-v4 thread-quests-v6 -- . ':(exclude)README.md' | git apply --3way --index
+git switch -c chore/thread-quests-v7
+git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v4:refs/tags/thread-quests-v4 refs/tags/thread-quests-v7:refs/tags/thread-quests-v7
+git diff --binary thread-quests-v4 thread-quests-v7 -- . ':(exclude)README.md' | git apply --3way --index
 ```
 
-競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v6 と一致させます。旧版からは先に v4 までの差分を取り込みます。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
+競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v7 と一致させます。旧版からは先に v4 までの差分を取り込みます。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。
