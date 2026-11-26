@@ -3,6 +3,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { isConflictingWrite } from '../../database/prisma-conflict';
 import { CartRepository } from './cart.repository';
 import { MAX_CART_QUANTITY } from './cart-limits';
+import { cartMessages } from './cart-messages';
 
 /**
  * カートへの追加・数量指定・削除に必要な業務ルールを適用する
@@ -60,7 +61,7 @@ export class CartService {
 
                     const next = (current?.quantity ?? 0) + quantity;
                     if (next > Math.min(product.stock, MAX_CART_QUANTITY)) {
-                        throw new ConflictException('在庫またはカートの上限を超える数量は追加できません。');
+                        throw new ConflictException(cartMessages.quantityLimit);
                     }
                     return this.repo.put(userId, productId, next, db);
                 });
@@ -70,7 +71,7 @@ export class CartService {
             }
         }
 
-        throw new ConflictException('カートが更新されました。もう一度追加してください。');
+        throw new ConflictException(cartMessages.concurrentUpdate);
     }
 
     /**

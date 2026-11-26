@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { logEvent } from '../../common/logging/logger';
 import { categories } from '../products/product-categories';
 import { ReportsRepository } from './reports.repository';
+import { reportsMessages } from './reports-messages';
 
 const dayMs = 86400000;
 
@@ -14,7 +15,7 @@ function dayStart(day: string | undefined) {
         !Number.isFinite(date.getTime()) ||
         date.toISOString().slice(0, 10) !== day
     ) {
-        throw new BadRequestException('日付を YYYY-MM-DD 形式で指定してください。');
+        throw new BadRequestException(reportsMessages.invalidDay);
     }
     return date;
 }
@@ -38,7 +39,7 @@ export class ReportsService {
         const result = await this.reports.dailySales(start, nextDay);
         if (result._sum.total === null) {
             logEvent('error', 'reports.daily_sales', { reason: 'missing_aggregate_total' });
-            throw new InternalServerErrorException('売上を集計できませんでした。');
+            throw new InternalServerErrorException(reportsMessages.aggregationFailed);
         }
         logEvent('info', 'reports.daily_sales', { reason: 'computed' });
         return { day, orders: result._count, total: result._sum.total };
@@ -51,7 +52,7 @@ export class ReportsService {
      */
     async productSales(category: string) {
         if (!categories.some((value) => value === category))
-            throw new BadRequestException('カテゴリーを指定してください。');
+            throw new BadRequestException(reportsMessages.invalidCategory);
         const products = await this.reports.products(category);
         const result = [];
         for (const product of products) {

@@ -2,6 +2,7 @@ import { productMessages } from '../products/product-messages';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InventoryRepository } from './inventory.repository';
 import type { UpdateStock } from './dto/update-stock.dto';
+import { inventoryMessages } from './inventory-messages';
 
 /**
  * 在庫更新の結果から商品不存在と編集競合を切り分ける
@@ -25,7 +26,7 @@ export class InventoryService {
     async update(id: string, dto: UpdateStock) {
         if ((await this.repo.update(id, dto)).count) return { updated: true };
         if (dto.expectedStock !== undefined && (await this.repo.find(id))) {
-            throw new ConflictException('在庫数が変更されました。一覧を更新してからやり直してください。');
+            throw new ConflictException(inventoryMessages.stockChanged);
         }
         throw new NotFoundException(productMessages.notFound);
     }
