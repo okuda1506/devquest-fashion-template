@@ -5,7 +5,9 @@ import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
 
-/** JWT の署名設定と認証ガードを提供する */
+/**
+ * JWT の署名設定と認証ガードを提供する
+ */
 @Module({
     imports: [
         JwtModule.registerAsync({

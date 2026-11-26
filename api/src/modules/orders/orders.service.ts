@@ -2,16 +2,24 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrdersRepository } from './orders.repository';
 import type { OrderStatus } from '../../generated/prisma/client';
 
-/** 顧客の注文参照と店舗の受注管理を担当する */
+/**
+ * 顧客の注文参照と店舗の受注管理を担当する
+ */
 @Injectable()
 export class OrdersService {
-    /** 注文参照と更新に使うリポジトリを受け取る */
+    /**
+     * 注文参照と更新に使うリポジトリを受け取る
+     */
     constructor(private readonly repo: OrdersRepository) {}
-    /** 対象顧客の注文履歴を返す */
+    /**
+     * 対象顧客の注文履歴を返す
+     */
     list(userId?: string) {
         return this.repo.list(userId);
     }
-    /** 顧客情報付きの受注データを管理画面に返す */
+    /**
+     * 顧客情報付きの受注データを管理画面に返す
+     */
     adminList() {
         return this.repo.adminList();
     }

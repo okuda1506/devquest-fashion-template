@@ -87,7 +87,7 @@ export function SessionProvider({ app, children }: { app: App; children: ReactNo
         } catch {
             /* 現行セッションと混在しないよう旧版のタブ専用データを除去する */
         }
-        /** 他タブで発生したセッション変更を現在の画面に反映する */
+        // 他タブで発生したセッション変更を現在の画面に反映する
         function syncSession(event: StorageEvent) {
             if (event.storageArea !== localStorage || (event.key !== storageKey && event.key !== null)) return;
             const next = readSession(storageKey, app);
@@ -101,13 +101,13 @@ export function SessionProvider({ app, children }: { app: App; children: ReactNo
         if (!session) return;
         const controller = new AbortController();
         const reauthenticate = 'セッションを確認できません。もう一度ログインしてください。';
-        /** 401 を返したリクエストのトークンが現在のものと一致する場合にログアウトする */
+        // 401 を返したリクエストのトークンが現在のものと一致する場合にログアウトする
         const reject = (event: Event) => {
             clear(reauthenticate, (event as CustomEvent<string>).detail);
         };
-        /** 有効期限を迎えたトークンだけを破棄する */
+        // 有効期限を迎えたトークンだけを破棄する
         const expire = () => clear(reauthenticate, session.token);
-        /** タブの復帰時にバックグラウンドで経過した有効期限を確認する */
+        // タブの復帰時にバックグラウンドで経過した有効期限を確認する
         const checkExpiry = () => {
             if (Date.now() >= session.expiresAt) expire();
         };
@@ -130,7 +130,7 @@ export function SessionProvider({ app, children }: { app: App; children: ReactNo
         };
     }, [app, clear, session]);
 
-    /** 画面用途に対応する認証 API を呼び出してセッションを保存する */
+    // 画面用途に対応する認証 API を呼び出してセッションを保存する
     async function login(email: string, password: string) {
         const next = await api<Session>('/auth/' + app + '/login', {
             method: 'POST',

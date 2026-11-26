@@ -14,7 +14,7 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
     const requestId = globalThis.crypto?.randomUUID?.();
     if (requestId) headers.set('X-Thread-Request-Id', requestId);
     const started = performance.now();
-    /** リクエストの結果を入力値やレスポンス本文を含めず開発者ツールへ記録する */
+    // リクエストの結果を入力値やレスポンス本文を含めず開発者ツールへ記録する
     function log(
         level: 'debug' | 'warn' | 'error',
         reason: string,

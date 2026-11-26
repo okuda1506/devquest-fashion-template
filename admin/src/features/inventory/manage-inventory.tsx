@@ -18,7 +18,7 @@ export function ManageInventory() {
     );
     const locked = data.saving || data.loading;
 
-    /** 一覧で確認した在庫数を更新前の期待値として API に送る */
+    // 一覧で確認した在庫数を更新前の期待値として API に送る
     function updateStock(event: FormEvent<HTMLFormElement>, product: Product) {
         event.preventDefault();
         const stock = Number(new FormData(event.currentTarget).get('stock'));

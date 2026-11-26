@@ -29,12 +29,12 @@ export function CheckoutAddress() {
     }));
     const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
-    /** 配送先を検証して注文内容プレビューを API から取得する */
+    // 配送先を検証して注文内容プレビューを API から取得する
     async function confirm(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (busy) return;
         const data = new FormData(event.currentTarget);
-        /** フォームに入力された配送先の値をトリムして取得する */
+        // フォームに入力された配送先の値をトリムして取得する
         const field = (name: keyof ShippingAddress) => String(data.get(name) ?? '').trim();
         const shippingAddress = {
             name: field('name'),

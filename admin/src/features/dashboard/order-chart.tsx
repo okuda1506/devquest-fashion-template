@@ -23,7 +23,7 @@ export function OrderChart({ days }: { days: DailyOrders }) {
     const max = axis[0];
     const columns = { gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` };
 
-    /** 矢印キーで隣接する日付へのフォーカスを移す */
+    // 矢印キーで隣接する日付へのフォーカスを移す
     function navigateDay(event: KeyboardEvent<HTMLButtonElement>, index: number) {
         let next: number;
         switch (event.key) {

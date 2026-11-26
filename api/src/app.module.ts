@@ -8,7 +8,9 @@ import { CheckoutModule } from './modules/checkout/checkout.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ReportsModule } from './modules/reports/reports.module';
 
-/** EC と店舗管理が使用する各機能モジュールを束ねる */
+/**
+ * EC と店舗管理が使用する各機能モジュールを束ねる
+ */
 @Module({
     imports: [
         DatabaseModule,

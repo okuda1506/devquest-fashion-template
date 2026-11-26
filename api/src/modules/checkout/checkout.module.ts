@@ -5,7 +5,9 @@ import { CheckoutController } from './controllers/checkout.controller';
 import { CheckoutService } from './checkout.service';
 import { CheckoutRepository } from './checkout.repository';
 
-/** 購入確認と確定に必要な依存を登録する */
+/**
+ * 購入確認と確定に必要な依存を登録する
+ */
 @Module({
     imports: [AuthModule, OrdersModule],
     controllers: [CheckoutController],

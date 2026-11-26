@@ -5,7 +5,9 @@ import { AdminOrdersController } from './controllers/admin-orders.controller';
 import { OrdersRepository } from './orders.repository';
 import { OrdersService } from './orders.service';
 
-/** 店舗管理と EC の注文機能を同じ業務サービスに接続する */
+/**
+ * 店舗管理と EC の注文機能を同じ業務サービスに接続する
+ */
 @Module({
     imports: [AuthModule],
     controllers: [OrdersController, AdminOrdersController],

@@ -5,7 +5,9 @@ import { IsNotEmpty, IsString, Matches, MaxLength, ValidateIf } from 'class-vali
 /** DTO の入力文字列だけをトリムして数値などは型検証に渡す */
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
-/** 注文時に必要な国内配送先の文字数と形式を定義する */
+/**
+ * 注文時に必要な国内配送先の文字数と形式を定義する
+ */
 export class ShippingAddressDto {
     @ApiProperty() @Transform(trim) @IsString() @IsNotEmpty() @MaxLength(100) name!: string;
     @ApiProperty() @Transform(trim) @IsString() @Matches(/^\d{3}-?\d{4}$/) postalCode!: string;

@@ -36,7 +36,7 @@ export function useAdminList<T>(endpoint: string, token: string) {
         return () => controller.abort();
     }, [endpoint, token, revision]);
 
-    /** サーバーの最新状態で一覧を再取得する */
+    // サーバーの最新状態で一覧を再取得する
     function refresh() {
         setLoadError('');
         setSaveError('');
@@ -44,15 +44,7 @@ export function useAdminList<T>(endpoint: string, token: string) {
         setRevision((version) => version + 1);
     }
 
-    /**
-     * 保存が成功した場合に一覧を取り直して操作結果を表示する
-     *
-     * @param path 更新先の API パス
-     * @param method 登録または部分更新の HTTP メソッド
-     * @param values 送信するフォーム値
-     * @param success 成功時の画面メッセージ
-     * @returns 更新に成功した場合に true
-     */
+    // 保存成功時に一覧を再取得して操作結果を表示する
     async function save(path: string, method: 'POST' | 'PATCH', values: object, success: string) {
         setMessage('');
         setSaveError('');

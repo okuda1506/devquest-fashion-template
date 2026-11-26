@@ -8,9 +8,14 @@ import { checkoutVersion, normalizeAddress } from './checkout-quote';
 import type { PlaceOrderDto } from './dto/place-order.dto';
 import type { PreviewOrderDto } from './dto/preview-order.dto';
 
-/** 注文内容の見積もりと確定を扱う */
+/**
+ * 注文内容の見積もりと確定を扱う
+ */
 @Injectable()
 export class CheckoutService {
+    /**
+     * 購入確定用と確定済み注文の照会用のリポジトリを受け取る
+     */
     constructor(
         private readonly repo: CheckoutRepository,
         private readonly orders: OrdersRepository
@@ -44,7 +49,9 @@ export class CheckoutService {
         return { items, total, shippingAddress, version: checkoutVersion(items, shippingAddress) };
     }
 
-    /** 注文内容と確定リクエストの再送に使う識別子を返す */
+    /**
+     * 注文内容と確定リクエストの再送に使う識別子を返す
+     */
     async preview(userId: string, input: PreviewOrderDto) {
         return { ...(await this.quote(userId, input)), checkoutId: randomUUID() };
     }

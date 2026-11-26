@@ -3,12 +3,18 @@ import { Prisma } from '../../generated/prisma/client';
 import { CartRepository } from './cart.repository';
 import { MAX_CART_QUANTITY } from './cart-limits';
 
-/** カートへの追加・数量指定・削除に必要な業務ルールを適用する */
+/**
+ * カートへの追加・数量指定・削除に必要な業務ルールを適用する
+ */
 @Injectable()
 export class CartService {
-    /** カート操作とトランザクションに使うリポジトリを受け取る */
+    /**
+     * カート操作とトランザクションに使うリポジトリを受け取る
+     */
     constructor(private readonly repo: CartRepository) {}
-    /** 指定ユーザーのカート明細を返す */
+    /**
+     * 指定ユーザーのカート明細を返す
+     */
     list(userId: string) {
         return this.repo.list(userId);
     }

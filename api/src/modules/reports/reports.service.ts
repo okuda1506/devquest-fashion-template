@@ -20,13 +20,19 @@ function dayStart(day: string | undefined) {
     return date;
 }
 
-/** 店舗スタッフが注文実績を調査するための日次・商品別レポート */
+/**
+ * 店舗スタッフが注文実績を調査するための日次・商品別レポート
+ */
 @Injectable()
 export class ReportsService {
-    /** 集計に使う受注と商品を取得するリポジトリを受け取る */
+    /**
+     * 集計に使う受注と商品を取得するリポジトリを受け取る
+     */
     constructor(private readonly reports: ReportsRepository) {}
 
-    /** UTC の営業日に含まれる注文の件数と合計を集計する */
+    /**
+     * UTC の営業日に含まれる注文の件数と合計を集計する
+     */
     async dailySales(day: string) {
         const start = dayStart(day);
         const nextDay = new Date(start.getTime() + dayMs);

@@ -27,13 +27,13 @@ export function Shop() {
         const element = header.current;
         if (!element) return;
         const rootStyle = document.documentElement.style;
-        /** 固定ヘッダーの高さを測って CSS の表示位置に反映する */
+        // 固定ヘッダーの高さを測って CSS の表示位置に反映する
         const measureHeader = () => rootStyle.setProperty('--store-header-height', `${element.offsetHeight}px`);
         measureHeader();
         const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(measureHeader);
         observer?.observe(element);
 
-        /** スクロール量に応じて重なり表示のヘッダーを切り替える */
+        // スクロール量に応じて重なり表示のヘッダーを切り替える
         const updateScroll = () => setScrolled(window.scrollY > 24);
         window.addEventListener('scroll', updateScroll, { passive: true });
         return () => {

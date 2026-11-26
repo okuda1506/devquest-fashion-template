@@ -30,7 +30,7 @@ export function AddToCart({
 
     useEffect(() => () => stopAnimation.current?.(), []);
 
-    /** 商品数量を追加し成功時にカート状態と演出を反映する */
+    // 商品数量を追加し成功時にカート状態と演出を反映する
     async function addToCart(button: HTMLButtonElement) {
         stopAnimation.current?.();
         setAdded(false);

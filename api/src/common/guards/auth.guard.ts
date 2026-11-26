@@ -7,10 +7,14 @@ import { allowedOrigins } from '../../modules/auth/origins';
 import type { AuthRequest } from '../../modules/auth/auth.types';
 import { audiences, issuer, sessionLifetimeSeconds } from '../../modules/auth/auth.config';
 
-/** 署名・有効期限・利用先・権限に基づいて API のアクセスを制御する */
+/**
+ * 署名・有効期限・利用先・権限に基づいて API のアクセスを制御する
+ */
 @Injectable()
 export class AuthGuard implements CanActivate {
-    /** JWT・アクセス権限メタデータ・利用者照合に必要な依存を受け取る */
+    /**
+     * JWT・アクセス権限メタデータ・利用者照合に必要な依存を受け取る
+     */
     constructor(
         private readonly jwt: JwtService,
         private readonly reflector: Reflector,
