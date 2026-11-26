@@ -1,5 +1,6 @@
+import { productMessages } from '../products/product-messages';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '../../generated/prisma/client';
+import { isConflictingWrite } from '../../database/prisma-conflict';
 import { CartRepository } from './cart.repository';
 import { MAX_CART_QUANTITY } from './cart-limits';
 
@@ -28,7 +29,7 @@ export class CartService {
      * @throws NotFoundException 公開中の対象商品が存在しない場合
      */
     async put(userId: string, id: string, qty: number) {
-        if (!(await this.repo.findProduct(id))) throw new NotFoundException('商品が見つかりません。');
+        if (!(await this.repo.findProduct(id))) throw new NotFoundException(productMessages.notFound);
         return this.repo.put(userId, id, qty);
     }
     /**
@@ -48,7 +49,7 @@ export class CartService {
             try {
                 return await this.repo.transact(async (db) => {
                     const product = await this.repo.findProduct(productId, db);
-                    if (!product) throw new NotFoundException('商品が見つかりません。');
+                    if (!product) throw new NotFoundException(productMessages.notFound);
                     const current = await db.cartItem.findUnique({
                         where: { userId_productId: { userId, productId } }
                     });
@@ -60,11 +61,7 @@ export class CartService {
                 });
             } catch (cause) {
                 // 同時追加で起きる直列化競合と複合キー重複だけを再試行する
-                if (
-                    !(cause instanceof Prisma.PrismaClientKnownRequestError) ||
-                    !['P2034', 'P2002'].includes(cause.code)
-                )
-                    throw cause;
+                if (!isConflictingWrite(cause)) throw cause;
             }
         }
         throw new ConflictException('カートが更新されました。もう一度追加してください。');

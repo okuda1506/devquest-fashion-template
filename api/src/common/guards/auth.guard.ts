@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from '../../modules/auth/auth.repository';
 import type { Role } from '../../generated/prisma/client';
-import { allowedOrigins } from '../../modules/auth/origins';
+import { allowedOrigins } from '../../config/environment';
 import type { AuthRequest } from '../../modules/auth/auth.types';
 import { audiences, issuer, sessionLifetimeSeconds } from '../../modules/auth/auth.config';
 

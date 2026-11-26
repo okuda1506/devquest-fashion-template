@@ -1,7 +1,8 @@
 import { BadRequestException, INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { allowedOrigins } from './modules/auth/origins';
+import { allowedOrigins } from './config/environment';
 import { SafeExceptionFilter } from './common/filters/safe-exception.filter';
+import { requestIdHeader } from './common/logging/log-events';
 import { traceRequest } from './common/logging/request-logger.middleware';
 
 /** API の共通パス・CORS・入力検証・OpenAPI を構成する */
@@ -10,8 +11,8 @@ export function configure(app: INestApplication) {
     app.enableCors({
         origin: [...allowedOrigins('store'), ...allowedOrigins('admin')],
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        allowedHeaders: ['Authorization', 'Content-Type', 'X-Thread-Request-Id'],
-        exposedHeaders: ['X-Thread-Request-Id']
+        allowedHeaders: ['Authorization', 'Content-Type', requestIdHeader],
+        exposedHeaders: [requestIdHeader]
     });
     app.use(traceRequest);
     app.useGlobalFilters(new SafeExceptionFilter(app.getHttpAdapter()));
@@ -35,8 +36,10 @@ export function configure(app: INestApplication) {
         AdminInventoryController: 'InventoryController',
         AdminReportsController: 'ReportsController'
     };
-    SwaggerModule.setup('api/docs', app, () => SwaggerModule.createDocument(app, config, {
-        operationIdFactory: (controller, method, version) =>
-            `${publishedControllerNames[controller] ?? controller}_${method}${version ? '_' + version : ''}`
-    }));
+    SwaggerModule.setup('api/docs', app, () =>
+        SwaggerModule.createDocument(app, config, {
+            operationIdFactory: (controller, method, version) =>
+                `${publishedControllerNames[controller] ?? controller}_${method}${version ? '_' + version : ''}`
+        })
+    );
 }

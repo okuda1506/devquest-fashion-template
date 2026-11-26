@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { loadEnvFile } from 'node:process';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { apiPort } from './config/environment';
 import { configure } from './app.config';
 
 /** リポジトリ直下の環境変数を読み込みローカル API を起動する */
@@ -25,6 +26,6 @@ async function main() {
     const app = await NestFactory.create(AppModule);
     configure(app);
     app.enableShutdownHooks();
-    await app.listen(Number(process.env.THREAD_PORT ?? 3001), '127.0.0.1');
+    await app.listen(apiPort(), '127.0.0.1');
 }
 void main();

@@ -1,3 +1,4 @@
+import { productMessages } from './product-messages';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProductsRepository } from './products.repository';
 import type { ProductQuery } from './dto/product-query.dto';
@@ -28,7 +29,7 @@ export class ProductsService {
      */
     async detail(id: string) {
         const product = await this.repository.detail(id);
-        if (!product) throw new NotFoundException('商品が見つかりません。');
+        if (!product) throw new NotFoundException(productMessages.notFound);
         return product;
     }
     /**
@@ -52,7 +53,7 @@ export class ProductsService {
      * @throws NotFoundException 対象商品が存在しない場合
      */
     async update(id: string, dto: UpdateProduct) {
-        if (!(await this.repository.update(id, dto)).count) throw new NotFoundException('商品が見つかりません。');
+        if (!(await this.repository.update(id, dto)).count) throw new NotFoundException(productMessages.notFound);
         return { updated: true };
     }
 }
