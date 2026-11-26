@@ -11,18 +11,35 @@ const prefectures =
  */
 export function ShippingFields({ address }: { address?: ShippingAddress }) {
     const prefectureLabel = useId();
+    const [lastName = '', ...givenNames] = address?.name.trim().split(/\s+/u) ?? [];
+    const firstName = givenNames.join(' ');
     return (
         <>
-            <label>
-                お名前
-                <input
-                    name="name"
-                    autoComplete="shipping name"
-                    maxLength={100}
-                    defaultValue={address?.name}
-                    required
-                />
-            </label>
+            <div className="checkout-fields">
+                <label>
+                    姓
+                    <input
+                        name="lastName"
+                        autoComplete="shipping family-name"
+                        maxLength={100}
+                        pattern=".*\S.*"
+                        defaultValue={lastName}
+                        required
+                    />
+                </label>
+                <label>
+                    名
+                    <input
+                        name="firstName"
+                        autoComplete="shipping given-name"
+                        maxLength={100}
+                        pattern=".*\S.*"
+                        defaultValue={firstName}
+                        required
+                    />
+                </label>
+            </div>
+            {lastName && !firstName && <p>保存済みのお名前を姓と名に分けて入力してください。</p>}
             <div className="checkout-fields">
                 <label>
                     郵便番号
@@ -104,9 +121,9 @@ export function ShippingFields({ address }: { address?: ShippingAddress }) {
  */
 export function readShippingAddress(form: HTMLFormElement): ShippingAddress {
     const data = new FormData(form);
-    const field = (name: keyof ShippingAddress) => String(data.get(name) ?? '').trim();
+    const field = (name: Exclude<keyof ShippingAddress, 'name'> | 'lastName' | 'firstName') => String(data.get(name) ?? '').trim();
     return {
-        name: field('name'),
+        name: [field('lastName'), field('firstName')].join(' '),
         postalCode: field('postalCode'),
         prefecture: field('prefecture'),
         city: field('city'),
