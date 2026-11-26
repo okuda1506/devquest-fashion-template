@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, expect, test, vi } from 'vitest';
-import { Products } from '../web/src/features/products/products';
+import { Products } from '../web/src/features/products/product-list-page';
 import { product } from './fixture';
 
 afterEach(() => vi.unstubAllGlobals());

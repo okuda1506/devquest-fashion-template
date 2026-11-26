@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, yen } from '../../api';
-import { useSession } from '../auth/session';
+import { api, yen } from '@thread/shared';
+import { useSession } from '@thread/shared/session';
 import { ProductVisual } from '../products/product-visual';
 import { CheckoutPage } from '../checkout/checkout-layout';
 import { useCart } from './cart-state';

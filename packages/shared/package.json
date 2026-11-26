@@ -5,7 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./session": "./src/session.tsx"
+    "./session": "./src/auth/session.tsx"
   },
   "peerDependencies": { "react": "^19.2.0" }
 }

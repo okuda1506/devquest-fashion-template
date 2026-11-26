@@ -1,8 +1,8 @@
 import type { CartItem } from '@thread/shared';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useMatch } from 'react-router-dom';
-import { api } from '../../api';
-import { useSession } from '../auth/session';
+import { api } from '@thread/shared';
+import { useSession } from '@thread/shared/session';
 
 type CartState = {
     items?: CartItem[];

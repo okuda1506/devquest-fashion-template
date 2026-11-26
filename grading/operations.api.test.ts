@@ -2,11 +2,12 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule, configure } from '../api/src/app';
-import { Db } from '../api/src/db';
+import { AppModule } from '../api/src/app.module';
+import { configure } from '../api/src/app.config';
+import { PrismaService } from '../api/src/database/prisma.service';
 
 let app: INestApplication;
-let db: Db;
+let db: PrismaService;
 let admin: string;
 let customer: string;
 let queries = 0;
@@ -29,7 +30,7 @@ beforeAll(async () => {
     app = module.createNestApplication();
     configure(app);
     await app.init();
-    db = app.get(Db);
+    db = app.get(PrismaService);
     db.$on('query', () => {
         queries++;
     });
