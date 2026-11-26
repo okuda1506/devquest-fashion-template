@@ -16,7 +16,7 @@ export const orderDetails = {
         items: { include: { product: { select: { code: true } } } },
         shippingAddress: { select: shippingAddressFields }
     },
-    omit: { guestAccessHash: true }
+    omit: { guestAccessHash: true, updatedAt: true }
 } satisfies Prisma.OrderDefaultArgs;
 
 /**

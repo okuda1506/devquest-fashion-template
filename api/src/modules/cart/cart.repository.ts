@@ -44,7 +44,8 @@ export class CartRepository {
         return source.cartItem.upsert({
             where: { customerId_productId: { customerId, productId } },
             update: { quantity },
-            create: { customerId, productId, quantity }
+            create: { customerId, productId, quantity },
+            select: { id: true, customerId: true, productId: true, quantity: true }
         });
     }
 
