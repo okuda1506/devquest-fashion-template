@@ -1,3 +1,4 @@
+import { jwtSecret } from '../../config/environment';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -11,15 +12,7 @@ import { AuthRepository } from './auth.repository';
 @Module({
     imports: [
         JwtModule.registerAsync({
-            useFactory: () => {
-                const secret = process.env.THREAD_JWT_SECRET;
-                if (!secret || secret.length < 32) {
-                    throw new Error(
-                        'リポジトリ直下の .env または環境変数の THREAD_JWT_SECRET に32文字以上の値を設定し、API を再起動してください。'
-                    );
-                }
-                return { secret };
-            }
+            useFactory: () => ({ secret: jwtSecret() })
         })
     ],
     controllers: [AuthController],

@@ -1,10 +1,9 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { logEvent } from '../../common/logging/logger';
+import { categories } from '../products/product-categories';
 import { ReportsRepository } from './reports.repository';
 
 const dayMs = 86400000;
-
-const categories = ['tops', 'outerwear', 'bottoms', 'accessories'];
 
 /** UTC の営業日を表す YYYY-MM-DD を日付境界へ変換する */
 function dayStart(day: string | undefined) {
@@ -51,7 +50,8 @@ export class ReportsService {
      * 受注明細に残る販売点数を商品単位で集計する
      */
     async productSales(category: string) {
-        if (!categories.includes(category)) throw new BadRequestException('カテゴリーを指定してください。');
+        if (!categories.some((value) => value === category))
+            throw new BadRequestException('カテゴリーを指定してください。');
         const products = await this.reports.products(category);
         const result = [];
         for (const product of products) {

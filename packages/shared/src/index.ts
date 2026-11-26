@@ -1,4 +1,4 @@
-export { api } from './api/client';
+export { api, ApiError } from './api/client';
 export { categories } from './constants/categories';
 export { orderLabels } from './constants/order-status';
 export { yen } from './format/currency';

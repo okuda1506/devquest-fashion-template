@@ -1,8 +1,7 @@
+import { logLevel, logLevels, type LogLevel } from '../../config/environment';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 export const requestLogContext = new AsyncLocalStorage<string>();
-
-const levels = { debug: 0, info: 1, warn: 2, error: 3 };
 
 /** 状態コードを使って認証拒否や入力エラーとサーバー障害を分ける */
 export function requestLogLevel(status: number) {
@@ -15,7 +14,7 @@ export function requestLogLevel(status: number) {
  * 呼び出し元から URL・SQL・例外本文・業務データを渡さない
  */
 export function logEvent(
-    level: keyof typeof levels,
+    level: LogLevel,
     event: string,
     details: {
         method?: string;
@@ -25,12 +24,7 @@ export function logEvent(
         reason?: string;
     } = {}
 ) {
-    const configured = process.env.THREAD_LOG_LEVEL;
-    const threshold =
-        configured && Object.hasOwn(levels, configured)
-            ? levels[configured as keyof typeof levels]
-            : levels[process.env.NODE_ENV === 'test' ? 'error' : 'info'];
-    if (levels[level] < threshold) return;
+    if (logLevels[level] < logLevels[logLevel()]) return;
     console[level](
         JSON.stringify({
             at: new Date().toISOString(),

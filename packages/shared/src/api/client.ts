@@ -1,3 +1,24 @@
+const requestIdHeader = 'X-Thread-Request-Id';
+const connectionMessage = 'API に接続できませんでした。';
+const requestFailedMessage = '処理に失敗しました。';
+
+/**
+ * API の HTTP ステータスと応答コードを保持する
+ */
+export class ApiError extends Error {
+    /**
+     * API が返した文言を表示用に保持する
+     */
+    constructor(
+        message: string,
+        readonly status: number,
+        readonly code?: string
+    ) {
+        super(message);
+        this.name = 'ApiError';
+    }
+}
+
 export const rejectedSessions = new EventTarget();
 
 /**
@@ -12,7 +33,7 @@ export const rejectedSessions = new EventTarget();
 export async function api<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
     const headers = new Headers(options.headers);
     const requestId = globalThis.crypto?.randomUUID?.();
-    if (requestId) headers.set('X-Thread-Request-Id', requestId);
+    if (requestId) headers.set(requestIdHeader, requestId);
     const started = performance.now();
     // リクエストの結果を入力値やレスポンス本文を含めず開発者ツールへ記録する
     function log(
@@ -39,10 +60,10 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
     if (token) headers.set('Authorization', 'Bearer ' + token);
     const response = await fetch('/api' + path, { ...options, headers }).catch(() => {
         log('error', 'network_failure');
-        throw new Error('API に接続できませんでした。');
+        throw new Error(connectionMessage);
     });
     const body = await response.json().catch(() => null);
-    const id = response.headers?.get('x-thread-request-id') ?? requestId;
+    const id = response.headers?.get(requestIdHeader) ?? requestId;
     log(
         response.ok ? 'debug' : response.status >= 500 ? 'error' : 'warn',
         response.ok
@@ -57,7 +78,11 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
         if (token && (response.status === 401 || response.status === 403)) {
             rejectedSessions.dispatchEvent(new CustomEvent('rejected', { detail: token }));
         }
-        throw new Error(typeof body?.message === 'string' ? body.message : '処理に失敗しました。');
+        throw new ApiError(
+            typeof body?.message === 'string' ? body.message : requestFailedMessage,
+            response.status,
+            typeof body?.code === 'string' ? body.code : undefined
+        );
     }
     return body as T;
 }

@@ -1,3 +1,4 @@
+import { productMessages } from '../products/product-messages';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InventoryRepository } from './inventory.repository';
 import type { UpdateStock } from './dto/update-stock.dto';
@@ -25,6 +26,6 @@ export class InventoryService {
         if (dto.expectedStock !== undefined && (await this.repo.find(id))) {
             throw new ConflictException('在庫数が変更されました。一覧を更新してからやり直してください。');
         }
-        throw new NotFoundException('商品が見つかりません。');
+        throw new NotFoundException(productMessages.notFound);
     }
 }

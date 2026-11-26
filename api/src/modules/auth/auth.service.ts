@@ -3,7 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from './auth.repository';
 import { hashPassword, verifyPassword } from './password';
-import { allowedOrigins, type Surface } from './origins';
+import { allowedOrigins, type Surface } from '../../config/environment';
 import { roles, audiences, issuer, sessionLifetimeSeconds, loginDenied } from './auth.config';
 import type { LoginDto } from './dto/login.dto';
 

@@ -1,3 +1,4 @@
+import { orderMessages } from './order-messages';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrdersRepository } from './orders.repository';
 import type { OrderStatus } from '../../generated/prisma/client';
@@ -32,7 +33,7 @@ export class OrdersService {
      * @throws NotFoundException 対象注文が存在しない場合
      */
     async update(id: string, status: OrderStatus) {
-        if (!(await this.repo.update(id, status)).count) throw new NotFoundException('注文が見つかりません。');
+        if (!(await this.repo.update(id, status)).count) throw new NotFoundException(orderMessages.notFound);
         return { updated: true };
     }
     /**
@@ -45,7 +46,7 @@ export class OrdersService {
      */
     async detail(userId: string, id: string) {
         const order = await this.repo.find(userId, id);
-        if (!order) throw new NotFoundException('注文が見つかりません。');
+        if (!order) throw new NotFoundException(orderMessages.notFound);
         return order;
     }
 }

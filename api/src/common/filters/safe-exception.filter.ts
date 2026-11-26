@@ -1,6 +1,7 @@
 import { ArgumentsHost, Catch, HttpException } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import type { ServerResponse } from 'node:http';
+import { logEvents } from '../logging/log-events';
 import { logEvent } from '../logging/logger';
 
 /**
@@ -16,7 +17,7 @@ export class SafeExceptionFilter extends BaseExceptionFilter {
             super.catch(exception, host);
             return;
         }
-        logEvent('error', 'http.exception', { reason: 'unexpected_failure' });
+        logEvent('error', logEvents.exception, { reason: 'unexpected_failure' });
         const response = host.switchToHttp().getResponse<ServerResponse>();
         if (response.headersSent) {
             response.end();
