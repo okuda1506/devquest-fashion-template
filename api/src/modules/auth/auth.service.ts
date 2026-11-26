@@ -7,12 +7,16 @@ import { allowedOrigins, type Surface } from './origins';
 import { roles, audiences, issuer, sessionLifetimeSeconds, loginDenied } from './auth.config';
 import type { LoginDto } from './dto/login.dto';
 
-/** 画面の用途に合うアカウントを認証してセッションを発行する */
+/**
+ * 画面の用途に合うアカウントを認証してセッションを発行する
+ */
 @Injectable()
 export class AuthService {
     private readonly dummyHash = hashPassword(randomBytes(24).toString('hex'));
 
-    /** アカウント検索と JWT 発行に必要な依存を受け取る */
+    /**
+     * アカウント検索と JWT 発行に必要な依存を受け取る
+     */
     constructor(
         private readonly accounts: AuthRepository,
         private readonly jwt: JwtService

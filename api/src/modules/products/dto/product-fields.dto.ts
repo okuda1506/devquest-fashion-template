@@ -3,7 +3,9 @@ import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsString, Max, MaxLength, Min } from 'class-validator';
 import { categories } from '../product-categories';
 
-/** 商品登録と更新に共通する項目の入力条件を定義する */
+/**
+ * 商品登録と更新に共通する項目の入力条件を定義する
+ */
 export class ProductFields {
     @ApiProperty()
     @IsString()

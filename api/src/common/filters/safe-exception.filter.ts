@@ -3,10 +3,14 @@ import { BaseExceptionFilter } from '@nestjs/core';
 import type { ServerResponse } from 'node:http';
 import { logEvent } from '../logging/logger';
 
-/** 未処理の例外の本文やスタックを出力せずに汎用の 500 応答を返す */
+/**
+ * 未処理の例外の本文やスタックを出力せずに汎用の 500 応答を返す
+ */
 @Catch()
 export class SafeExceptionFilter extends BaseExceptionFilter {
-    /** 既知の HTTP エラーは NestJS 標準の応答形式で返す */
+    /**
+     * 既知の HTTP エラーは NestJS 標準の応答形式で返す
+     */
     override catch(exception: unknown, host: ArgumentsHost) {
         if (exception instanceof HttpException) {
             super.catch(exception, host);

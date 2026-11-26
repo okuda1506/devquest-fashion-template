@@ -20,7 +20,7 @@ export function CheckoutConfirm() {
 
     if (!review) return <Navigate to="/checkout" replace />;
 
-    /** 確認済みの内容で注文を送信して完了画面へ遷移する */
+    // 確認済みの内容で注文を送信して完了画面へ遷移する
     async function placeOrder(event: FormEvent<HTMLFormElement>, current: CheckoutReview) {
         event.preventDefault();
         if (sending.current) return;

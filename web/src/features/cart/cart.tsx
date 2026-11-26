@@ -34,7 +34,7 @@ function CartContents({ token }: { token: string }) {
     const { items, loading, loadError, refresh } = useCart();
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
-    /** 変更したい数量または削除をカート API に反映する */
+    // 変更したい数量または削除をカート API に反映する
     async function change(path: string, options: RequestInit) {
         setBusy(true);
         setMessage('');

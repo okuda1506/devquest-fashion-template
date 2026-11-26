@@ -17,7 +17,7 @@ export function ManageProducts() {
     const visible = data.items.filter(matchesProduct);
     const locked = data.saving || data.loading;
 
-    /** 商品登録または既存商品の変更項目の保存を行う */
+    // 商品登録または既存商品の変更項目の保存を行う
     async function saveProduct(fields: ProductFields, stock: number) {
         if (editor === null) return false;
         if (editor === 'new') {

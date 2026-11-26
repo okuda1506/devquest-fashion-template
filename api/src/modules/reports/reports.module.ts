@@ -4,7 +4,9 @@ import { AdminReportsController } from './controllers/admin-reports.controller';
 import { ReportsService } from './reports.service';
 import { ReportsRepository } from './reports.repository';
 
-/** 店舗管理にレポート用 API を追加する */
+/**
+ * 店舗管理にレポート用 API を追加する
+ */
 @Module({
     imports: [AuthModule],
     controllers: [AdminReportsController],

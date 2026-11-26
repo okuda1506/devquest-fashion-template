@@ -5,7 +5,9 @@ import { AdminProductsController } from './controllers/admin-products.controller
 import { ProductsRepository } from './products.repository';
 import { ProductsService } from './products.service';
 
-/** 商品カタログと管理者向け商品管理を構成する */
+/**
+ * 商品カタログと管理者向け商品管理を構成する
+ */
 @Module({
     imports: [AuthModule],
     controllers: [ProductsController, AdminProductsController],

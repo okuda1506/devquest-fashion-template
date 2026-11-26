@@ -2,10 +2,14 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InventoryRepository } from './inventory.repository';
 import type { UpdateStock } from './dto/update-stock.dto';
 
-/** 在庫更新の結果から商品不存在と編集競合を切り分ける */
+/**
+ * 在庫更新の結果から商品不存在と編集競合を切り分ける
+ */
 @Injectable()
 export class InventoryService {
-    /** 在庫と競合状態の確認に使うリポジトリを受け取る */
+    /**
+     * 在庫と競合状態の確認に使うリポジトリを受け取る
+     */
     constructor(private readonly repo: InventoryRepository) {}
     /**
      * 在庫の更新結果から商品不存在と編集競合を判別する

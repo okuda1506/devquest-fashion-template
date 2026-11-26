@@ -21,7 +21,7 @@ export function ProductForm({
         name.current?.focus();
     }, []);
 
-    /** 商品フォームの入力値を送信用の型にそろえる */
+    // 商品フォームの入力値を送信用の型にそろえる
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
