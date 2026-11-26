@@ -5,11 +5,13 @@ import { allowedOrigins } from './auth/origins';
 import { CartModule } from './cart/cart';
 import { DbModule } from './db';
 import { InventoryModule } from './inventory/inventory';
+import { SafeExceptionFilter, traceRequest } from './logging';
 import { OrdersModule } from './orders/orders';
+import { ReportsModule } from './operations/reports';
 import { ProductsModule } from './products/products';
 
 /** EC と店舗管理が使用する各機能モジュールを束ねる */
-@Module({ imports: [DbModule, AuthModule, ProductsModule, InventoryModule, CartModule, OrdersModule] })
+@Module({ imports: [DbModule, AuthModule, ProductsModule, InventoryModule, CartModule, OrdersModule, ReportsModule] })
 export class AppModule {}
 
 /** API の共通パス・CORS・入力検証・OpenAPI を構成する */
@@ -18,8 +20,11 @@ export function configure(app: INestApplication) {
     app.enableCors({
         origin: [...allowedOrigins('store'), ...allowedOrigins('admin')],
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        allowedHeaders: ['Authorization', 'Content-Type']
+        allowedHeaders: ['Authorization', 'Content-Type', 'X-Thread-Request-Id'],
+        exposedHeaders: ['X-Thread-Request-Id']
     });
+    app.use(traceRequest);
+    app.useGlobalFilters(new SafeExceptionFilter(app.getHttpAdapter()));
     app.useGlobalPipes(
         new ValidationPipe({
             transform: true,

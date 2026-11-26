@@ -70,7 +70,14 @@ export class ProductsRepository {
     /** 商品マスタを操作する DB クライアントを受け取る */
     constructor(private readonly db: Db) {}
 
-    /** 検索結果のページと同じ条件に一致する総件数を取得する */
+    /**
+     * 同じ検索条件で指定ページと総件数を照会する
+     *
+     * 商品名は大文字小文字を区別せず部分一致させる
+     *
+     * @param query カテゴリー・検索語・ページ番号・件数上限
+     * @returns 商品 ID 順の結果と総件数およびページ情報
+     */
     async list(query: ProductQuery) {
         const where: Prisma.ProductWhereInput = {
             category: query.category,
@@ -115,7 +122,13 @@ export class ProductsService {
     list(query: ProductQuery) {
         return this.repository.list(query);
     }
-    /** 公開商品の詳細を返し対象外の場合は 404 とする */
+    /**
+     * 公開商品を ID で参照する
+     *
+     * @param id 対象商品の ID
+     * @returns 公開中の商品情報
+     * @throws NotFoundException 存在しない場合または非公開の場合
+     */
     async detail(id: string) {
         const product = await this.repository.detail(id);
         if (!product) throw new NotFoundException('商品が見つかりません。');
@@ -129,7 +142,14 @@ export class ProductsService {
     create(dto: CreateProduct) {
         return this.repository.create(dto);
     }
-    /** 商品情報を更新し存在しない商品は 404 とする */
+    /**
+     * リクエストに含まれる商品情報を更新する
+     *
+     * @param id 更新対象の商品 ID
+     * @param dto 更新する項目
+     * @returns 更新成功を示す結果
+     * @throws NotFoundException 対象商品が存在しない場合
+     */
     async update(id: string, dto: UpdateProduct) {
         if (!(await this.repository.update(id, dto)).count) throw new NotFoundException('商品が見つかりません。');
         return { updated: true };

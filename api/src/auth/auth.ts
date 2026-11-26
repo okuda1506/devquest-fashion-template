@@ -49,7 +49,14 @@ export class AuthGuard implements CanActivate {
         private readonly db: Db
     ) {}
 
-    /** JWT と現在のユーザー権限を照合して認証済みユーザーをリクエストに設定する */
+    /**
+     * JWT と DB 上の現在の権限を照合して認証済み利用者を設定する
+     *
+     * @param context HTTP リクエストと権限定義を参照する実行コンテキスト
+     * @returns 認証済み利用者を設定できた場合に true
+     * @throws UnauthorizedException トークンが無効か DB 上の利用者と一致しない場合
+     * @throws ForbiddenException ロールまたは呼び出し元のオリジンが許可されていない場合
+     */
     async canActivate(context: ExecutionContext) {
         const request = context.switchToHttp().getRequest<AuthRequest>();
         const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1];
@@ -98,7 +105,16 @@ export class AuthService {
         private readonly jwt: JwtService
     ) {}
 
-    /** 認証に成功した利用者に有効期限1時間の JWT を発行する */
+    /**
+     * 認証に成功した利用者に画面用途を限定した1時間有効の JWT を発行する
+     *
+     * @param input 照合するメールアドレスとパスワード
+     * @param surface ストアまたは管理画面
+     * @param origin ブラウザから送信された呼び出し元
+     *
+     * @returns トークンと利用者の表示名・ロール・失効時刻
+     * @throws UnauthorizedException オリジン・資格情報・画面用途のいずれかが一致しない場合
+     */
     async login(input: LoginDto, surface: Surface, origin?: string) {
         if (origin !== undefined && !allowedOrigins(surface).includes(origin))
             throw new UnauthorizedException(loginDenied);

@@ -11,6 +11,7 @@ const products = [
   { id: 'draft-coat', name: 'ウールコート（発売前）', category: 'outerwear', description: '発売準備中の管理用商品。', price: 24000, stock: 5, isPublished: false },
 ];
 
+/** 標準の商品と演習用アカウント・受注を既存レコードを保持しながら投入する */
 async function seed() {
   for (const product of products) await db.product.upsert({ where: { id: product.id }, create: product, update: {} });
   // 既存アカウントを変更せず、EC サイト専用の顧客を初期登録する。
