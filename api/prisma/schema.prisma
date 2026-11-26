@@ -30,13 +30,33 @@ model ProductCategory {
 }
 
 model Customer {
-    id           String     @id @default(cuid())
-    email        String     @unique
+    id           String            @id @default(cuid())
+    email        String            @unique
     lastName     String
     firstName    String?
+    lastNameKana String?
+    firstNameKana String?
+    phone        String?
     passwordHash String
+    addresses    CustomerAddress[]
     cartItems    CartItem[]
     orders       Order[]
+}
+
+model CustomerAddress {
+    id         String   @id @default(cuid())
+    customerId String
+    name       String
+    postalCode String
+    prefecture String
+    city       String
+    line1      String
+    line2      String   @default("")
+    phone      String
+    createdAt  DateTime @default(now())
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+    @@index([customerId, createdAt])
 }
 
 model Member {

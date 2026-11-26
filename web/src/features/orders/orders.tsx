@@ -22,7 +22,7 @@ export function Orders() {
             <h1>注文履歴</h1>
             {!token ? (
                 <p>
-                    <Link to="/login">ログイン</Link>してください。
+                    <Link to="/login" state={{ returnTo: '/orders' }}>ログイン</Link>してください。
                 </p>
             ) : error ? (
                 <p role="alert">{error}</p>

@@ -18,7 +18,7 @@ flowchart LR
 | `web/src/features/` | 認証、商品、カート、購入、注文履歴 |
 | `admin/src/features/` | 認証、ダッシュボード、商品、在庫、受注 |
 | `packages/shared/src/` | ECと店舗管理で使うAPIクライアント、セッション、型、表示用定数、金額整形 |
-| `api/src/modules/` | 認証、商品、在庫、カート、購入、注文、レポート |
+| `api/src/modules/` | 認証、会員、商品、在庫、カート、購入、注文、レポート |
 | `api/src/common/` | 認証Guard、Decorator、例外処理、リクエストログ |
 | `api/src/database/` | Prismaの接続とNestJSへの登録 |
 | `api/src/integrations/` | 外部サービスとの通信を追加する際の規約 |
@@ -46,9 +46,12 @@ flowchart LR
 | 領域 | テーブルと関連 |
 |---|---|
 | 顧客と店舗管理 | `Customer` と `Member` は別テーブルで 姓・名とメール・パスワードハッシュを持つ。ログイン先と JWT の audience に応じて参照する |
+| アドレス帳 | `CustomerAddress` は `Customer` を参照する。会員は自分の複数の配送先を管理して購入時に選択できる |
 | 商品 | `Product` は `ProductCategory` を参照する。価格・在庫・公開状態は商品単位で管理する |
 | カート | `CartItem` は顧客と商品の組み合わせを主キーとする |
 | 受注 | `Order` は顧客を参照し 複数の `OrderItem` を持つ。明細には購入時の商品名と単価を保存する |
 | 配送先 | `OrderShippingAddress` は注文と1対1で 確定時の宛先を保持する。配送先のなかった旧注文は関連行を持たない |
 
 既存のアカウント名は空白で分割し 最初の部分を姓に 残りを名に移す。空白のない名前は元の文字列を姓に収めて名を NULL にする。購入時の配送先はプロフィールとは独立した宛先として保存する。
+
+会員登録とマイページの API は `api/src/modules/customers/` にある。会員のカナ・電話番号は `Customer` に保存する。購入時は選択または入力した配送先を使い 注文確定時に `OrderShippingAddress` へ記録する。

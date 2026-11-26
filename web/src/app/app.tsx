@@ -8,6 +8,8 @@ import { CheckoutAddress } from '../features/checkout/checkout-address-page';
 import { CheckoutConfirm } from '../features/checkout/checkout-confirm-page';
 import { CheckoutComplete } from '../features/checkout/checkout-complete-page';
 import { CheckoutFlow } from '../features/checkout/checkout-flow';
+import { Register } from '../features/auth/register';
+import { AccountPage } from '../features/account/account-page';
 import { Login } from '../features/auth/login';
 import { Orders } from '../features/orders/orders';
 import { Products } from '../features/products/product-list-page';
@@ -60,10 +62,16 @@ export function Shop() {
                             <span>注文履歴</span>
                         </NavLink>
                         {session ? (
-                            <button onClick={logout} aria-label="ログアウト">
-                                <LogOut aria-hidden="true" />
-                                <span>ログアウト</span>
-                            </button>
+                            <>
+                                <NavLink to="/account" aria-label="マイページ">
+                                    <UserRound aria-hidden="true" />
+                                    <span>マイページ</span>
+                                </NavLink>
+                                <button onClick={logout} aria-label="ログアウト">
+                                    <LogOut aria-hidden="true" />
+                                    <span>ログアウト</span>
+                                </button>
+                            </>
                         ) : (
                             <NavLink to="/login" aria-label="ログイン">
                                 <UserRound aria-hidden="true" />
@@ -92,6 +100,8 @@ export function Shop() {
                         <Route path="complete/:id" element={<CheckoutComplete />} />
                     </Route>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/account" element={<AccountPage />} />
                     <Route
                         path="*"
                         element={
