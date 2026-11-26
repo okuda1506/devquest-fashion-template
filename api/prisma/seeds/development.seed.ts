@@ -1,5 +1,6 @@
 import { PrismaService } from '../../src/database/prisma.service';
 import { hashPassword } from '../../src/modules/auth/password';
+import { developmentCatalog } from './development-catalog';
 
 const db = new PrismaService();
 const products = [
@@ -57,6 +58,8 @@ const products = [
 /** 標準の商品と演習用アカウント・受注を既存レコードを保持しながら投入する */
 async function seed() {
     for (const product of products) await db.product.upsert({ where: { id: product.id }, create: product, update: {} });
+    await db.product.createMany({ data: developmentCatalog(), skipDuplicates: true });
+
     // 既存アカウントを変更せず、EC サイト専用の顧客を初期登録する。
     const customer = await db.user.upsert({
         where: { email: 'customer@example.test' },

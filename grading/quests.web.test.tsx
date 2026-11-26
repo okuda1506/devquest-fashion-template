@@ -232,7 +232,7 @@ criteria(123, {
         expect(await heading(anotherCategory.name)).toBeVisible();
         const code = await screen.findByText(/商品コード\s*[:：]\s*c$/);
         expect(code).toBeVisible();
-        expect(screen.getByText('小物')).toBeVisible();
+        expect(screen.getByText('アクセサリー')).toBeVisible();
     },
     3: async () => {
         storefront('/products/missing', productResponse);

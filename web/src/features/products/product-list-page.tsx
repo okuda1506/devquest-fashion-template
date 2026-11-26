@@ -13,6 +13,9 @@ export function Products() {
     const [category, setCategory] = useState('');
     const [query, setQuery] = useState('');
     const [sort, setSort] = useState<Sort>('default');
+    const [page, setPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [pageSize, setPageSize] = useState(20);
     const [products, setProducts] = useState<Product[]>([]);
     const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
     const [attempt, setAttempt] = useState(0);
@@ -23,11 +26,14 @@ export function Products() {
         const params = new URLSearchParams();
         if (category) params.set('category', category);
         if (query.trim()) params.set('q', query.trim());
+        if (page > 1) params.set('page', String(page));
         setState('loading');
-        api<{ items: Product[] }>('/products?' + params, { signal: controller.signal }).then(
+        api<{ items: Product[]; total: number; limit: number }>('/products?' + params, { signal: controller.signal }).then(
             (data) => {
                 if (!controller.signal.aborted) {
                     setProducts(data.items);
+                    setTotal(data.total ?? data.items.length);
+                    setPageSize(data.limit ?? 20);
                     setState('ready');
                 }
             },
@@ -36,7 +42,7 @@ export function Products() {
             }
         );
         return () => controller.abort();
-    }, [query, attempt]);
+    }, [query, attempt, page]);
 
     useLayoutEffect(() => {
         if (
@@ -118,7 +124,7 @@ export function Products() {
                         <h2 id="collection" tabIndex={-1}>
                             商品一覧
                         </h2>
-                        {state === 'ready' && <span>{products.length} 点</span>}
+                        {state === 'ready' && <span>{total} 点</span>}
                     </div>
                     <div className="filters">
                         <label className="catalog-search">
@@ -127,7 +133,10 @@ export function Products() {
                             <input
                                 type="search"
                                 value={query}
-                                onChange={(e) => setQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setPage(1);
+                                    setQuery(e.target.value);
+                                }}
                                 placeholder="商品を検索"
                             />
                         </label>
@@ -168,6 +177,13 @@ export function Products() {
                     ) : (
                         <p>該当する商品はありません。</p>
                     ))}
+                {state === 'ready' && total > pageSize && (
+                    <nav className="catalog-pagination" aria-label="商品一覧のページ">
+                        <button disabled={page === 1} onClick={() => setPage(page - 1)}>前へ</button>
+                        <span>{page} / {Math.ceil(total / pageSize)}</span>
+                        <button disabled={page * pageSize >= total} onClick={() => setPage(page + 1)}>次へ</button>
+                    </nav>
+                )}
             </section>
         </>
     );

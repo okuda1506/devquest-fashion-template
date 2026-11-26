@@ -44,7 +44,7 @@ jobs:
             echo '対象の課題ブランチが存在しません。'
             exit 1
           fi
-          git fetch --depth=1 https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v4
+          git fetch --depth=1 https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v5
           git diff --exit-code FETCH_HEAD "$GITHUB_SHA" -- .github/workflows grading package.json package-lock.json eslint.config.js .npmrc api/.npmrc web/.npmrc admin/.npmrc packages/shared/.npmrc api/package.json api/prisma.config.ts api/prisma/seeds/ api/prisma/scripts/ api/jest.config.cjs api/tsconfig.json api/tsconfig.build.json web/package.json web/vite.config.ts web/tsconfig.json web/src/test-setup.ts admin/package.json admin/vite.config.ts admin/tsconfig.json packages/shared/package.json ':(glob)**/*.test.ts' ':(glob)**/*.test.tsx' ':(glob)**/*.spec.ts' ':(glob)**/*.spec.tsx'
       - name: Node.js をセットアップ
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
