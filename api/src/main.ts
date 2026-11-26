@@ -3,7 +3,8 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadEnvFile } from 'node:process';
 import { NestFactory } from '@nestjs/core';
-import { AppModule, configure } from './app';
+import { AppModule } from './app.module';
+import { configure } from './app.config';
 
 /** リポジトリ直下の環境変数を読み込みローカル API を起動する */
 async function main() {

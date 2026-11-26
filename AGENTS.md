@@ -46,3 +46,10 @@
 - CUSTOMERはECサイトのみ、ADMINは管理画面のみでログインできる認証・認可の方針を守る。画面側の制限だけでなく、API側のロール検証を壊さない。
 - 商品・在庫・受注の処理をフロント側へ重複実装しない。既存のNestJS APIを利用する。
 - UI作業で課題の期待動作との衝突が見つかった場合は、勝手に課題仕様を変えず、影響を明記する。
+
+## コードの配置
+
+- API は `api/src/modules/` に業務機能ごとにまとめる。Controller・Service・Repository・DTO・Module の責務を分け、購入者向けと管理者向けの入口は別の Controller にする
+- EC と管理画面はそれぞれ `src/features/` に機能単位で配置する。両画面で使う型・通信・セッションなどは `packages/shared/` に置く
+- 外部 API 連携のクエストでは通信を `api/src/integrations/` に置き、業務上の判断は対応する機能で扱う
+- 購入確定のトランザクション境界やテストの配置は [コード構成](docs/code-architecture.md) を参照する

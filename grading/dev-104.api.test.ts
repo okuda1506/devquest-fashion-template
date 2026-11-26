@@ -2,7 +2,8 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule, configure } from '../api/src/app';
+import { AppModule } from '../api/src/app.module';
+import { configure } from '../api/src/app.config';
 
 let app: INestApplication;
 beforeAll(async () => {

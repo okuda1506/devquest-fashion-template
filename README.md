@@ -147,12 +147,10 @@ EC サイトでログインして商品をカートに入れると、**カート
 
 ## 開発・採点
 
-- `web/src/features/` に顧客向けの商品・カート・注文・認証があります。
-- `admin/src/features/` に管理者専用のログイン、ダッシュボード、商品・在庫・受注管理があります。
-- `packages/shared/` は共通の型、API クライアント、認証状態の処理を提供します。画面とビルドは `web/` と `admin/` がそれぞれ持ちます。
-- `api/src/` では NestJS の機能モジュールごとに、コントローラー、サービス、DB リポジトリ、入力 DTO を分けています。
-- `api/prisma/` に PostgreSQL のスキーマ・マイグレーション・初期データがあります。DevQuest 本体の Supabase とは別の DB です。
-- `grading/` と `.github/workflows/` は管理者が保守します。依存関係、ビルド設定、テスト、初期データも採点の前提として保護されています。
+- `web/src/features/` と `admin/src/features/` は画面を機能ごとに整理しています。
+- `packages/shared/src/` は共通の API 通信、セッション、型、表示用の処理を提供します。
+- `api/src/modules/` は業務機能ごとに Controller・Service・Repository・DTO を配置しています。EC と店舗管理が同じ機能を使う場合は Controller を分けます。
+- 購入確認と注文確定は `checkout/`、注文履歴と受注管理は `orders/` にあります。[コード構成と処理の探し方](docs/code-architecture.md)
 
 ```sh
 npm run typecheck
@@ -188,16 +186,16 @@ API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定で�
 
 ### 採点の更新（すでに演習中の場合）
 
-新しく演習を始める場合は、THREAD の最新の `main` から演習リポジトリを作成します。旧採点版で始めた演習リポジトリでも、従来の対象課題は採点できます。既存リポジトリで DEV-141 以降を続ける場合は、作業をコミットして次の例のように上流の差分を取り込んでください。例では `thread-quests-v2` を出発点にしています。
+新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。新構成は採点タグ `thread-quests-v4` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v3 からの移行例です。
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git switch -c chore/thread-quests-v3
-git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v2:refs/tags/thread-quests-v2 refs/tags/thread-quests-v3:refs/tags/thread-quests-v3
-git diff --binary thread-quests-v2 thread-quests-v3 -- . ':(exclude)README.md' | git apply --3way --index
+git switch -c chore/thread-quests-v4
+git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v3:refs/tags/thread-quests-v3 refs/tags/thread-quests-v4:refs/tags/thread-quests-v4
+git diff --binary thread-quests-v3 thread-quests-v4 -- . ':(exclude)README.md' | git apply --3way --index
 ```
 
-競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v3 と一致させます。以前の採点版では、その版から v2 までの差分も確認します。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
+競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v4 と一致させます。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。

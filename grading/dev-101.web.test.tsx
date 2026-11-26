@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { expect, test } from 'vitest';
-import { ProductCard } from '../web/src/features/products/products';
+import { ProductCard } from '../web/src/features/products/product-card';
 import { product } from './fixture';
 
 function card(stock: number) {

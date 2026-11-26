@@ -3,5 +3,5 @@
     "target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,
     "experimentalDecorators":true,"emitDecoratorMetadata":true,"esModuleInterop":true,
     "skipLibCheck":true,"noEmit":true,"types":["node","jest"]
-  }, "include":["src","prisma","prisma.config.ts","../grading/*.api.test.ts"]
+  }, "include":["src","test","prisma","prisma.config.ts","../grading/*.api.test.ts"]
 }

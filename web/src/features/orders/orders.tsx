@@ -1,8 +1,8 @@
 import { orderLabels, type Order } from '@thread/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, yen } from '../../api';
-import { useSession } from '../auth/session';
+import { api, yen } from '@thread/shared';
+import { useSession } from '@thread/shared/session';
 
 /** ログイン中の顧客向けに注文履歴を表示する */
 export function Orders() {

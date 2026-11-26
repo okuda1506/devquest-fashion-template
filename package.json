@@ -17,7 +17,7 @@
     "benchmark:sales": "npm run benchmark:sales -w api",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "lint": "eslint web/src web/vite.config.ts admin/src admin/vite.config.ts packages/shared/src api/src api/prisma api/prisma.config.ts grading",
+    "lint": "eslint web/src web/vite.config.ts admin/src admin/vite.config.ts packages/shared/src api/src api/test api/prisma api/prisma.config.ts grading",
     "test": "npm run test -w web && npm run test -w api",
     "grade": "node grading/grade.mjs",
     "dev:store": "npm run dev -w web",

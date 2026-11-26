@@ -2,18 +2,21 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter, Link, MemoryRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { Products, ProductCard, ProductDetail } from '../web/src/features/products/products';
+import { Products } from '../web/src/features/products/product-list-page';
+import { ProductCard } from '../web/src/features/products/product-card';
+import { ProductDetail } from '../web/src/features/products/product-detail-page';
 import { Cart } from '../web/src/features/cart/cart';
 import { CartProvider } from '../web/src/features/cart/cart-state';
 import { Orders } from '../web/src/features/orders/orders';
-import { CheckoutConfirm, CheckoutFlow } from '../web/src/features/checkout/checkout';
-import { ManageOrders } from '../admin/src/features/admin/manage-orders';
-import { Dashboard } from '../admin/src/features/admin/dashboard';
+import { CheckoutConfirm } from '../web/src/features/checkout/checkout-confirm-page';
+import { CheckoutFlow } from '../web/src/features/checkout/checkout-flow';
+import { ManageOrders } from '../admin/src/features/orders/manage-orders';
+import { Dashboard } from '../admin/src/features/dashboard/dashboard';
 import { product } from './fixture';
 
 type Reply = (url: URL, init: RequestInit) => Promise<Response> | Response;
 const session = vi.hoisted(() => ({ token: 'shopper-token' }));
-vi.mock('../web/src/features/auth/session', () => ({
+vi.mock('@thread/shared/session', () => ({
     useSession: () => ({ session: { token: session.token, name: '購入者', role: 'CUSTOMER' }, checking: false })
 }));
 const inStock = product('a', 2500, 7);

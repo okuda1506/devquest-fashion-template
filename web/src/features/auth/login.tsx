@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSession } from './session';
+import { useSession } from '@thread/shared/session';
 
 /** 画面用途に対応するログインフォームを表示して認証後に対象画面へ移動する */
 export function Login() {

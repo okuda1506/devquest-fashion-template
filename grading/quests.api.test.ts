@@ -3,12 +3,13 @@ import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule, configure } from '../api/src/app';
-import { Db } from '../api/src/db';
-import { hashPassword } from '../api/src/auth/password';
+import { AppModule } from '../api/src/app.module';
+import { configure } from '../api/src/app.config';
+import { PrismaService } from '../api/src/database/prisma.service';
+import { hashPassword } from '../api/src/modules/auth/password';
 
 let app: INestApplication;
-let db: Db;
+let db: PrismaService;
 let admin: string;
 let user: string;
 let other: string;
@@ -64,7 +65,7 @@ beforeAll(async () => {
     app = module.createNestApplication();
     configure(app);
     await app.init();
-    db = app.get(Db);
+    db = app.get(PrismaService);
     admin = (
         await http()
             .post('/api/auth/admin/login')
