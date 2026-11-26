@@ -16,7 +16,7 @@ export class OrdersService {
     /**
      * 対象顧客の注文履歴を返す
      */
-    list(customerId?: string) {
+    list(customerId: string) {
         return this.repo.list(customerId);
     }
 

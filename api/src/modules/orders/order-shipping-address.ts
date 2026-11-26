@@ -9,3 +9,9 @@ export const shippingAddressFields = {
     line2: true,
     phone: true
 } satisfies Prisma.OrderShippingAddressSelect;
+
+// ゲスト注文を参照するためのハッシュは API の応答に含めない
+export const orderDetails = {
+    include: { items: true, shippingAddress: { select: shippingAddressFields } },
+    omit: { guestAccessHash: true }
+} satisfies Prisma.OrderDefaultArgs;

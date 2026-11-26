@@ -85,12 +85,14 @@ enum OrderStatus {
 
 model Order {
     id              String                @id @default(cuid())
-    customerId      String
+    customerId      String?
+    guestEmail      String?
+    guestAccessHash String?
     total           Int
     shippingAddress OrderShippingAddress?
     status          OrderStatus           @default(PLACED)
     createdAt       DateTime              @default(now())
-    customer        Customer              @relation(fields: [customerId], references: [id])
+    customer        Customer?             @relation(fields: [customerId], references: [id], onDelete: Restrict)
     items           OrderItem[]
 
     @@index([customerId, createdAt])

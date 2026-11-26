@@ -62,6 +62,7 @@ export function ManageOrders() {
                         <summary>
                             <span>
                                 <strong>{order.user.name}</strong>
+                                {order.isGuest && <small>ゲスト購入</small>}
                                 <small className="admin-mono">{order.id}</small>
                             </span>
                             <time dateTime={order.createdAt}>{new Date(order.createdAt).toLocaleString('ja-JP')}</time>

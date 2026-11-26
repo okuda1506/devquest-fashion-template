@@ -2,17 +2,21 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { api } from '@thread/shared';
+import { guestCartLines } from '../cart/guest-cart';
 import { useCart } from '../cart/cart-state';
 import { CheckoutPage } from './checkout-layout';
 import type { CheckoutContext, CheckoutReview } from './checkout.types';
 import type { CustomerAddress } from '../account/account.types';
 import { ShippingFields, readShippingAddress } from './shipping-fields';
+import { guestCheckoutPath, guestOrderApi } from './guest-order-session';
 import { OrderSummary } from './order-summary';
 
 /** 配送先を入力して注文内容の確認へ進む */
 export function CheckoutAddress() {
-    const { token, address, setAddress, setReview } = useOutletContext<CheckoutContext>();
-    const { items: cart, loadError, refresh } = useCart();
+    const context = useOutletContext<CheckoutContext>();
+    const { guest, token, address, setAddress, setReview } = context;
+    const { items: memberCart, guestItems, loadError, refresh } = useCart();
+    const cart = guest ? guestItems : memberCart;
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
     const navigate = useNavigate();
@@ -23,6 +27,7 @@ export function CheckoutAddress() {
     const selectedAddress = savedAddresses.find(({ id }) => id === selectedAddressId);
 
     useEffect(() => {
+        if (!token) return;
         const controller = new AbortController();
         void api<CustomerAddress[]>('/customers/me/addresses', { signal: controller.signal }, token).then(
             (addresses) => { if (!controller.signal.aborted) setSavedAddresses(addresses); },
@@ -43,7 +48,10 @@ export function CheckoutAddress() {
     async function confirm(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (busy) return;
-        const shippingAddress = readShippingAddress(event.currentTarget);
+        const form = event.currentTarget;
+        const shippingAddress = readShippingAddress(form);
+        const guestEmail = guest ? String(new FormData(form).get('email') ?? '').trim() : '';
+        if (guest) context.setEmail(guestEmail);
         setAddress(shippingAddress);
         setReview(undefined);
         if (!shippingAddress.name || !shippingAddress.city || !shippingAddress.line1) {
@@ -53,14 +61,19 @@ export function CheckoutAddress() {
         setBusy(true);
         setError('');
         try {
-            const review = await api<CheckoutReview>(
-                '/orders/preview',
-                { method: 'POST', body: JSON.stringify({ shippingAddress }) },
-                token
-            );
+            const review = guest
+                ? await guestOrderApi<CheckoutReview>('/preview', {
+                    method: 'POST',
+                    body: JSON.stringify({ shippingAddress, email: guestEmail, items: guestCartLines(guestItems) })
+                })
+                : await api<CheckoutReview>(
+                    '/orders/preview',
+                    { method: 'POST', body: JSON.stringify({ shippingAddress }) },
+                    token
+                );
             setAddress(review.shippingAddress);
             setReview(review);
-            navigate('/checkout/confirm');
+            navigate((guest ? guestCheckoutPath : '/checkout') + '/confirm');
         } catch (cause) {
             setError((cause as Error).message);
         } finally {
@@ -69,11 +82,11 @@ export function CheckoutAddress() {
     }
 
     return (
-        <CheckoutPage step={1} title="配送先を入力">
+        <CheckoutPage step={1} title={guest ? 'ゲスト購入のお届け先' : '配送先を入力'}>
             <Link className="back-link" to="/cart">
                 <ArrowLeft size={15} aria-hidden="true" /> カートへ戻る
             </Link>
-            {loadError ? (
+            {!guest && loadError ? (
                 <div>
                     <p role="alert">{loadError}</p>
                     <button onClick={refresh}>再試行</button>
@@ -90,6 +103,19 @@ export function CheckoutAddress() {
                         <form className="checkout-form" onSubmit={confirm}>
                             <fieldset disabled={busy}>
                                 <legend>お届け先</legend>
+                                {guest && (
+                                    <label>
+                                        ご連絡先メールアドレス
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            autoComplete="email"
+                                            maxLength={254}
+                                            defaultValue={context.email}
+                                            required
+                                        />
+                                    </label>
+                                )}
                                 {savedAddresses.length > 0 && (
                                     <label>
                                         <span id={addressBookLabel}>アドレス帳から選ぶ</span>

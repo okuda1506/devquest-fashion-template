@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { formatAccountName } from '../auth/account-name';
-import { shippingAddressFields } from './order-shipping-address';
+import { orderDetails } from './order-shipping-address';
 import type { OrderStatus } from '../../generated/prisma/client';
 
 /**
@@ -17,15 +17,22 @@ export class OrdersRepository {
     /**
      * 注文を明細付きで新しい順に取得する
      */
-    list(customerId?: string) {
-        return this.db.order.findMany({ where: { customerId }, include: { items: true, shippingAddress: { select: shippingAddressFields } }, orderBy: { createdAt: 'desc' } });
+    list(customerId: string) {
+        return this.db.order.findMany({ ...orderDetails, where: { customerId }, orderBy: { createdAt: 'desc' } });
     }
 
     /**
      * 注文 ID と顧客 ID の組み合わせで注文を取得する
      */
     find(customerId: string, id: string) {
-        return this.db.order.findFirst({ where: { id, customerId }, include: { items: true, shippingAddress: { select: shippingAddressFields } } });
+        return this.db.order.findFirst({ ...orderDetails, where: { id, customerId } });
+    }
+
+    /**
+     * 注文 ID とゲストの参照キーハッシュが一致する注文を取得する
+     */
+    findGuest(accessHash: string, id: string) {
+        return this.db.order.findFirst({ ...orderDetails, where: { id, customerId: null, guestAccessHash: accessHash } });
     }
 
     /**
@@ -33,16 +40,19 @@ export class OrdersRepository {
      */
     async adminList() {
         const orders = await this.db.order.findMany({
+            ...orderDetails,
             include: {
-                items: true,
-                shippingAddress: { select: shippingAddressFields },
+                ...orderDetails.include,
                 customer: { select: { lastName: true, firstName: true, email: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
-        return orders.map(({ customer, ...order }) => ({
+        return orders.map(({ customer, guestEmail, ...order }) => ({
             ...order,
-            user: { name: formatAccountName(customer), email: customer.email }
+            isGuest: customer === null,
+            user: customer
+                ? { name: formatAccountName(customer), email: customer.email }
+                : { name: order.shippingAddress?.name ?? 'ゲスト', email: guestEmail ?? '' }
         }));
     }
 

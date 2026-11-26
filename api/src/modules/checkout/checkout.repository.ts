@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
-import { shippingAddressFields } from '../orders/order-shipping-address';
+import { orderDetails } from '../orders/order-shipping-address';
+import type { GuestCartLineDto } from './dto/guest-checkout.dto';
 import type { CheckoutItem } from './checkout-quote';
 
 /**
@@ -26,6 +27,18 @@ export class CheckoutRepository {
     }
 
     /**
+     * ゲストのカートに含まれる商品を現在の値で取得する
+     */
+    async guestCart(items: GuestCartLineDto[], db: Pick<Prisma.TransactionClient, 'product'> = this.db) {
+        const quantities = new Map(items.map((item) => [item.productId, item.quantity]));
+        const products = await db.product.findMany({
+            where: { id: { in: [...quantities.keys()] } },
+            orderBy: { id: 'asc' }
+        });
+        return products.map((product) => ({ product, quantity: quantities.get(product.id)! }));
+    }
+
+    /**
      * 在庫・注文・カートにまたがる処理を単一トランザクションとして実行する
      */
     transact<T>(process: (db: Prisma.TransactionClient) => Promise<T>) {
@@ -46,7 +59,7 @@ export class CheckoutRepository {
      * 確認 ID を注文 ID として明細と配送先を保存する
      */
     createOrder(data: Prisma.OrderUncheckedCreateInput, db: Prisma.TransactionClient) {
-        return db.order.create({ data, include: { items: true, shippingAddress: { select: shippingAddressFields } } });
+        return db.order.create({ ...orderDetails, data });
     }
 
     /**

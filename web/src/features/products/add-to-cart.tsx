@@ -2,23 +2,20 @@ import { type Product } from '@thread/shared';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, Minus, Plus, ShoppingBag } from 'lucide-react';
-import { api } from '@thread/shared';
 import { animateCartAddition } from '../cart/cart-animation';
 import { useCart } from '../cart/cart-state';
 
 /** 商品詳細で選択した数量を追加して結果を表示する */
 export function AddToCart({
     product,
-    token,
     cartIcon,
     productImage
 }: {
     product: Product;
-    token: string;
     cartIcon: RefObject<HTMLSpanElement | null>;
     productImage: RefObject<HTMLImageElement | null>;
 }) {
-    const { items, refresh } = useCart();
+    const { items, addProduct } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
     const [error, setError] = useState('');
@@ -37,12 +34,7 @@ export function AddToCart({
         setError('');
         setBusy(true);
         try {
-            await api(
-                '/cart/' + encodeURIComponent(product.id),
-                { method: 'POST', body: JSON.stringify({ quantity: selected }) },
-                token
-            );
-            refresh();
+            await addProduct(product, selected);
             setAdded(true);
         } catch (cause) {
             setError((cause as Error).message);

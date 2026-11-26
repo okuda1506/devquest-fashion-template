@@ -7,7 +7,7 @@ import { useCart } from '../features/cart/cart-state';
 import { CheckoutAddress } from '../features/checkout/checkout-address-page';
 import { CheckoutConfirm } from '../features/checkout/checkout-confirm-page';
 import { CheckoutComplete } from '../features/checkout/checkout-complete-page';
-import { CheckoutFlow } from '../features/checkout/checkout-flow';
+import { CheckoutFlow, GuestCheckoutFlow } from '../features/checkout/checkout-flow';
 import { Register } from '../features/auth/register';
 import { AccountPage } from '../features/account/account-page';
 import { Login } from '../features/auth/login';
@@ -94,6 +94,11 @@ export function Shop() {
                     <Route path="/products/:id" element={<ProductDetail cartIcon={cartIcon} />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/orders" element={<Orders />} />
+                    <Route path="/checkout/guest" element={<GuestCheckoutFlow />}>
+                        <Route index element={<CheckoutAddress />} />
+                        <Route path="confirm" element={<CheckoutConfirm />} />
+                        <Route path="complete/:id" element={<CheckoutComplete />} />
+                    </Route>
                     <Route path="/checkout" element={<CheckoutFlow />}>
                         <Route index element={<CheckoutAddress />} />
                         <Route path="confirm" element={<CheckoutConfirm />} />

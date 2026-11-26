@@ -1,6 +1,8 @@
 import { ConflictException, HttpStatus } from '@nestjs/common';
 
 export const checkoutMessages = {
+    guestAccessRequired: 'ゲスト注文を確認できません。購入したブラウザのタブで開いてください。',
+    missingProducts: '購入できなくなった商品があります。カートを確認してください。',
     emptyCart: 'カートに商品がありません。',
     totalLimit: '一度に注文できる金額を超えています。数量を調整してください。',
     unavailableQuantity: (name: string) => `${name} は現在、この数量で注文できません。カートを確認してください。`,
