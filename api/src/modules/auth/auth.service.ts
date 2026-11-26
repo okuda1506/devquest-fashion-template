@@ -44,7 +44,7 @@ export class AuthService {
         const role = roles[surface];
         const exp = Math.floor(Date.now() / 1000) + sessionLifetimeSeconds;
         const token = await this.jwt.signAsync(
-            { sub: user.id, exp },
+            { sub: String(user.id), exp },
             { issuer, audience: audiences[role], algorithm: 'HS256' }
         );
         return { token, name: formatAccountName(user), role, expiresAt: exp * 1000 };

@@ -19,7 +19,7 @@ export function ManageOrders() {
     );
     const keyword = query.trim().toLowerCase();
     const visible = data.items.filter((order) => {
-        const searchText = [order.id, order.user.name, order.user.email].join(' ').toLowerCase();
+        const searchText = [order.id, order.orderNumber, order.user.name, order.user.email].join(' ').toLowerCase();
         return searchText.includes(keyword) && (status === 'all' || order.status === status);
     });
     const locked = data.loading || data.saving;
@@ -63,7 +63,7 @@ export function ManageOrders() {
                             <span>
                                 <strong>{order.user.name}</strong>
                                 {order.isGuest && <small>ゲスト購入</small>}
-                                <small className="admin-mono">{order.id}</small>
+                                <small className="admin-mono">{order.orderNumber ?? order.id}</small>
                             </span>
                             <time dateTime={order.createdAt}>{new Date(order.createdAt).toLocaleString('ja-JP')}</time>
                             <span className={'badge ' + (order.status === 'SHIPPED' ? 'positive' : '')}>

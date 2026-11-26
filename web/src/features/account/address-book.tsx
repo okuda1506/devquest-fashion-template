@@ -11,7 +11,7 @@ const addressesPath = '/customers/me/addresses';
 export function AddressBook({ token, initialAddresses }: { token: string; initialAddresses: CustomerAddress[] }) {
     const [addresses, setAddresses] = useState(initialAddresses);
     const [editing, setEditing] = useState<CustomerAddress | 'new' | null>(null);
-    const [deleting, setDeleting] = useState<string>();
+    const [deleting, setDeleting] = useState<number>();
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
     const [busy, setBusy] = useState(false);
@@ -46,7 +46,7 @@ export function AddressBook({ token, initialAddresses }: { token: string; initia
     /**
      * 選択したお届け先を削除して一覧に反映する
      */
-    async function remove(id: string) {
+    async function remove(id: number) {
         setError('');
         setNotice('');
         setBusy(true);

@@ -23,28 +23,28 @@ export class CartController {
     /**
      * ログイン中の顧客のカートを返す
      */
-    @Get() list(@CurrentUser() user: { id: string }) {
+    @Get() list(@CurrentUser() user: { id: number }) {
         return this.cart.list(user.id);
     }
 
     /**
      * 商品を指定した数量だけカートに追加する
      */
-    @Post(':id') add(@CurrentUser() user: { id: string }, @Param('id') id: string, @Body() dto: QuantityDto) {
+    @Post(':id') add(@CurrentUser() user: { id: number }, @Param('id') id: string, @Body() dto: QuantityDto) {
         return this.cart.add(user.id, id, dto.quantity);
     }
 
     /**
      * 商品明細の数量を指定値に置き換える
      */
-    @Put(':id') put(@CurrentUser() user: { id: string }, @Param('id') id: string, @Body() dto: QuantityDto) {
+    @Put(':id') put(@CurrentUser() user: { id: number }, @Param('id') id: string, @Body() dto: QuantityDto) {
         return this.cart.put(user.id, id, dto.quantity);
     }
 
     /**
      * 商品を顧客のカートから取り除く
      */
-    @Delete(':id') remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    @Delete(':id') remove(@CurrentUser() user: { id: number }, @Param('id') id: string) {
         return this.cart.remove(user.id, id);
     }
 }

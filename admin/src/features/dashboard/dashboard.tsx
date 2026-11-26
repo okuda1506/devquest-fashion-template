@@ -185,7 +185,7 @@ export function Dashboard() {
                             <ul className="dashboard-list dashboard-recent-orders">
                                 {orders.items.slice(0, 5).map((order) => (
                                     <li key={order.id}>
-                                        <Link to={orderHref({ q: order.id })}>
+                                        <Link to={orderHref({ q: order.orderNumber ?? order.id })}>
                                             <span>
                                                 <strong>{order.user.name}</strong>
                                                 <small>{orderDate.format(new Date(order.createdAt))}</small>

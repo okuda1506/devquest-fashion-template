@@ -22,14 +22,14 @@ export class OrdersController {
     /**
      * ログイン中の顧客が行った注文を一覧表示する
      */
-    @Get() list(@CurrentUser() user: { id: string }) {
+    @Get() list(@CurrentUser() user: { id: number }) {
         return this.orders.list(user.id);
     }
 
     /**
      * ログイン中の顧客が行った指定注文を取得する
      */
-    @Get(':id') detail(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+    @Get(':id') detail(@CurrentUser() user: { id: number }, @Param('id') id: string) {
         return this.orders.detail(user.id, id);
     }
 }

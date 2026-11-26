@@ -46,7 +46,7 @@ export class ReportsService {
     }
 
     /**
-     * カテゴリーごとに最大100商品を商品 ID 順で取得する
+     * カテゴリーごとに最大100商品を商品コード順で取得する
      *
      * 受注明細に残る販売点数を商品単位で集計する
      */
@@ -57,7 +57,7 @@ export class ReportsService {
         const result = [];
         for (const product of products) {
             const sales = await this.reports.salesForProduct(product.id);
-            result.push({ ...product, unitsSold: sales._sum.quantity ?? 0 });
+            result.push({ id: product.code, name: product.name, unitsSold: sales._sum.quantity ?? 0 });
         }
         logEvent('info', 'reports.product_sales', { reason: 'computed' });
         return result;

@@ -9,4 +9,4 @@ export type CustomerProfile = {
     phone: string | null;
 };
 
-export type CustomerAddress = ShippingAddress & { id: string };
+export type CustomerAddress = ShippingAddress & { id: number };

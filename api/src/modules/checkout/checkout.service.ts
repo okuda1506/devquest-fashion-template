@@ -14,7 +14,7 @@ import type { PreviewOrderDto } from './dto/preview-order.dto';
 import type { GuestCartLineDto, GuestPlaceDto, GuestPreviewDto } from './dto/guest-checkout.dto';
 import { guestCheckoutVersion } from './guest-checkout-proof';
 
-type Buyer = { customerId: string } | { accessHash: string; email: string; items: GuestCartLineDto[] };
+type Buyer = { customerId: number } | { accessHash: string; email: string; items: GuestCartLineDto[] };
 
 /**
  * 注文内容の見積もりと確定を扱う
@@ -54,7 +54,7 @@ export class CheckoutService {
                     checkoutMessages.unavailableQuantity(product.name)
                 );
             }
-            return { productId: product.id, name: product.name, unitPrice: product.price, quantity };
+            return { productId: product.code, productKey: product.id, name: product.name, unitPrice: product.price, quantity };
         });
         const total = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
         if (total > 2147483647) throw new BadRequestException(checkoutMessages.totalLimit);
@@ -65,8 +65,9 @@ export class CheckoutService {
     /**
      * 注文内容と確定リクエストの再送に使う識別子を返す
      */
-    async preview(customerId: string, input: PreviewOrderDto) {
-        return { ...(await this.quote({ customerId }, input)), checkoutId: randomUUID() };
+    async preview(customerId: number, input: PreviewOrderDto) {
+        const { items, ...quote } = await this.quote({ customerId }, input);
+        return { ...quote, items: items.map(({ productId, name, unitPrice, quantity }) => ({ productId, name, unitPrice, quantity })), checkoutId: randomUUID() };
     }
 
     /**
@@ -78,6 +79,7 @@ export class CheckoutService {
         const checkoutId = randomUUID();
         return {
             ...quote,
+            items: quote.items.map(({ productId, name, unitPrice, quantity }) => ({ productId, name, unitPrice, quantity })),
             checkoutId,
             email: input.email,
             version: guestCheckoutVersion(checkoutId, accessHash, input.email, quote.version)
@@ -87,7 +89,7 @@ export class CheckoutService {
     /**
      * ログインした会員の注文を確定する
      */
-    place(customerId: string, input: PlaceOrderDto) {
+    place(customerId: number, input: PlaceOrderDto) {
         return this.commit({ customerId }, input);
     }
 
@@ -143,19 +145,23 @@ export class CheckoutService {
                 }
                 for (const item of items) {
                     // 在庫の条件判定と減算を同一の SQL 更新にまとめて売り越しを防ぐ
-                    const updated = await this.repo.reduceStock(item, db);
+                    const updated = await this.repo.reduceStock(item.productKey, item.quantity, db);
                     if (!updated.count)
                         throw checkoutConflict('INSUFFICIENT_STOCK', checkoutMessages.insufficientStock(item.name));
                 }
                 const order = await this.repo.createOrder(
                     {
-                        id: input.checkoutId,
+                        reference: input.checkoutId,
                         ...('customerId' in buyer
                             ? { customerId: buyer.customerId }
                             : { guestEmail: buyer.email, guestAccessHash: buyer.accessHash }),
                         total,
                         shippingAddress: { create: shippingAddress },
-                        items: { create: items }
+                        items: {
+                            create: items.map(({ productKey, name, unitPrice, quantity }) => ({
+                                productId: productKey, name, unitPrice, quantity
+                            }))
+                        }
                     },
                     db
                 );

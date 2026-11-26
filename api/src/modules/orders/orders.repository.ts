@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { formatAccountName } from '../auth/account-name';
-import { orderDetails } from './order-shipping-address';
+import { orderDetails, orderView } from './order-shipping-address';
 import type { OrderStatus } from '../../generated/prisma/client';
 
 /**
@@ -17,22 +17,28 @@ export class OrdersRepository {
     /**
      * 注文を明細付きで新しい順に取得する
      */
-    list(customerId: string) {
-        return this.db.order.findMany({ ...orderDetails, where: { customerId }, orderBy: { createdAt: 'desc' } });
+    async list(customerId: number) {
+        const orders = await this.db.order.findMany({ ...orderDetails, where: { customerId }, orderBy: { createdAt: 'desc' } });
+        return orders.map(orderView);
     }
 
     /**
      * 注文 ID と顧客 ID の組み合わせで注文を取得する
      */
-    find(customerId: string, id: string) {
-        return this.db.order.findFirst({ ...orderDetails, where: { id, customerId } });
+    async find(customerId: number, reference: string) {
+        const order = await this.db.order.findFirst({ ...orderDetails, where: { reference, customerId } });
+        return order && orderView(order);
     }
 
     /**
      * 注文 ID とゲストの参照キーハッシュが一致する注文を取得する
      */
-    findGuest(accessHash: string, id: string) {
-        return this.db.order.findFirst({ ...orderDetails, where: { id, customerId: null, guestAccessHash: accessHash } });
+    async findGuest(accessHash: string, reference: string) {
+        const order = await this.db.order.findFirst({
+            ...orderDetails,
+            where: { reference, customerId: null, guestAccessHash: accessHash }
+        });
+        return order && orderView(order);
     }
 
     /**
@@ -48,7 +54,7 @@ export class OrdersRepository {
             orderBy: { createdAt: 'desc' }
         });
         return orders.map(({ customer, guestEmail, ...order }) => ({
-            ...order,
+            ...orderView({ ...order, guestEmail: null }),
             isGuest: customer === null,
             user: customer
                 ? { name: formatAccountName(customer), email: customer.email }
@@ -60,6 +66,6 @@ export class OrdersRepository {
      * 指定した注文を新しいステータスに変更する
      */
     update(id: string, status: OrderStatus) {
-        return this.db.order.updateMany({ where: { id }, data: { status } });
+        return this.db.order.updateMany({ where: { reference: id }, data: { status } });
     }
 }

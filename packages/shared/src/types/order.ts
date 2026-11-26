@@ -12,6 +12,7 @@ export type ShippingAddress = {
 
 export type Order = {
     id: string;
+    orderNumber?: string;
     status: keyof typeof orderLabels;
     total: number;
     createdAt: string;

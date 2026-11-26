@@ -36,7 +36,7 @@ export class CustomersService {
     /**
      * ログイン中の顧客が編集できる会員情報を返す
      */
-    async profile(customerId: string) {
+    async profile(customerId: number) {
         const profile = await this.customers.profile(customerId);
         if (!profile) throw new NotFoundException(customerMessages.profileNotFound);
         return profile;
@@ -45,7 +45,7 @@ export class CustomersService {
     /**
      * 会員情報を更新して メール変更時は既存パスワードを照合する
      */
-    async updateProfile(customerId: string, { currentPassword, ...profile }: UpdateCustomerDto) {
+    async updateProfile(customerId: number, { currentPassword, ...profile }: UpdateCustomerDto) {
         const credentials = await this.customers.credentials(customerId);
         if (!credentials) throw new NotFoundException(customerMessages.profileNotFound);
 
@@ -66,21 +66,21 @@ export class CustomersService {
     /**
      * 購入時に選べる本人の配送先を一覧で返す
      */
-    addresses(customerId: string) {
+    addresses(customerId: number) {
         return this.customers.addresses(customerId);
     }
 
     /**
      * 入力済みの配送先を正規化して本人のアドレス帳へ追加する
      */
-    addAddress(customerId: string, address: ShippingAddressDto) {
+    addAddress(customerId: number, address: ShippingAddressDto) {
         return this.customers.addAddress(customerId, normalizeAddress(address));
     }
 
     /**
      * 本人の配送先を変更する
      */
-    async updateAddress(customerId: string, id: string, address: ShippingAddressDto) {
+    async updateAddress(customerId: number, id: number, address: ShippingAddressDto) {
         const updated = await this.customers.updateAddress(customerId, id, normalizeAddress(address));
         if (!updated) throw new NotFoundException(customerMessages.addressNotFound);
         return updated;
@@ -89,7 +89,7 @@ export class CustomersService {
     /**
      * 本人のアドレス帳から配送先を削除する
      */
-    async deleteAddress(customerId: string, id: string) {
+    async deleteAddress(customerId: number, id: number) {
         const result = await this.customers.deleteAddress(customerId, id);
         if (!result.count) throw new NotFoundException(customerMessages.addressNotFound);
     }

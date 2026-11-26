@@ -9,28 +9,30 @@ datasource db {
 }
 
 model Product {
-    id              String          @id
+    id              Int             @id @default(autoincrement())
+    code            String          @unique @default(uuid())
     name            String
     description     String
-    category        String
+    categoryId      Int
     price           Int
     stock           Int
     isPublished     Boolean         @default(true)
-    productCategory ProductCategory @relation(fields: [category], references: [id])
+    productCategory ProductCategory @relation(fields: [categoryId], references: [id])
     cartItems       CartItem[]
     orderItems      OrderItem[]
 
-    @@index([category])
+    @@index([categoryId])
 }
 
 model ProductCategory {
-    id       String    @id
+    id       Int       @id @default(autoincrement())
+    code     String    @unique
     name     String
     products Product[]
 }
 
 model Customer {
-    id           String            @id @default(cuid())
+    id           Int               @id @default(autoincrement())
     email        String            @unique
     lastName     String
     firstName    String?
@@ -44,8 +46,8 @@ model Customer {
 }
 
 model CustomerAddress {
-    id         String   @id @default(cuid())
-    customerId String
+    id         Int      @id @default(autoincrement())
+    customerId Int
     name       String
     postalCode String
     prefecture String
@@ -60,7 +62,7 @@ model CustomerAddress {
 }
 
 model Member {
-    id           String  @id @default(cuid())
+    id           Int     @id @default(autoincrement())
     email        String  @unique
     lastName     String
     firstName    String?
@@ -68,13 +70,14 @@ model Member {
 }
 
 model CartItem {
-    customerId String
-    productId  String
+    id         Int      @id @default(autoincrement())
+    customerId Int
+    productId  Int
     quantity   Int
     customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
     product    Product  @relation(fields: [productId], references: [id])
 
-    @@id([customerId, productId])
+    @@unique([customerId, productId])
     @@index([productId])
 }
 
@@ -84,8 +87,9 @@ enum OrderStatus {
 }
 
 model Order {
-    id              String                @id @default(cuid())
-    customerId      String?
+    id              Int                   @id @default(autoincrement())
+    reference       String                @unique @default(uuid())
+    customerId      Int?
     guestEmail      String?
     guestAccessHash String?
     total           Int
@@ -100,7 +104,8 @@ model Order {
 }
 
 model OrderShippingAddress {
-    orderId    String @id
+    id         Int    @id @default(autoincrement())
+    orderId    Int    @unique
     name       String
     postalCode String
     prefecture String
@@ -112,9 +117,9 @@ model OrderShippingAddress {
 }
 
 model OrderItem {
-    id        String  @id @default(cuid())
-    orderId   String
-    productId String
+    id        Int     @id @default(autoincrement())
+    orderId   Int
+    productId Int
     name      String
     unitPrice Int
     quantity  Int

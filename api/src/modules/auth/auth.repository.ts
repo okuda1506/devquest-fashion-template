@@ -24,7 +24,7 @@ export class AuthRepository {
     /**
      * セッションの利用先に対応するアカウントが現存するか確認する
      */
-    findViewer(id: string, surface: Surface) {
+    findViewer(id: number, surface: Surface) {
         const query = { where: { id }, select: { id: true } };
         return surface === 'admin' ? this.db.member.findUnique(query) : this.db.customer.findUnique(query);
     }

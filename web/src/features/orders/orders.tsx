@@ -20,6 +20,7 @@ export function Orders() {
     return (
         <section className="utility-page">
             <h1>注文履歴</h1>
+            {token && <p><Link to="/account">マイページに戻る</Link></p>}
             {!token ? (
                 <p>
                     <Link to="/login" state={{ returnTo: '/orders' }}>ログイン</Link>してください。
@@ -34,6 +35,7 @@ export function Orders() {
                 orders.map((order) => (
                     <article className="row" key={order.id}>
                         <div>
+                            {order.orderNumber && <p>注文番号 {order.orderNumber}</p>}
                             <strong>{order.items.map((item) => `${item.name} × ${item.quantity}`).join('、')}</strong>
                             <p>
                                 {new Date(order.createdAt).toLocaleString('ja-JP')} ・ {orderLabels[order.status]}

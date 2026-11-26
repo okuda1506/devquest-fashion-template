@@ -32,7 +32,7 @@ export function developmentCatalog() {
                 const productName = collection ? `${collection} ${name}` : name;
 
                 return {
-                    id: `thread-catalog-${String(number).padStart(3, '0')}`,
+                    code: `TH-C-${String(number).padStart(4, '0')}`,
                     category,
                     name: `${productName} / ${color}`,
                     description: `${productName}の${color}カラー。`,

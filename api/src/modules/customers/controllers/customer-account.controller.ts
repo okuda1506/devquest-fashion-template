@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, HttpCode, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, HttpCode, Param, ParseIntPipe, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequireRole } from '../../../common/decorators/require-role.decorator';
@@ -26,7 +26,7 @@ export class CustomerAccountController {
      */
     @Get()
     @Header('Cache-Control', 'no-store')
-    profile(@CurrentUser() customer: { id: string }) {
+    profile(@CurrentUser() customer: { id: number }) {
         return this.customers.profile(customer.id);
     }
 
@@ -35,7 +35,7 @@ export class CustomerAccountController {
      */
     @Patch()
     @Header('Cache-Control', 'no-store')
-    updateProfile(@CurrentUser() customer: { id: string }, @Body() dto: UpdateCustomerDto) {
+    updateProfile(@CurrentUser() customer: { id: number }, @Body() dto: UpdateCustomerDto) {
         return this.customers.updateProfile(customer.id, dto);
     }
 
@@ -44,7 +44,7 @@ export class CustomerAccountController {
      */
     @Get('addresses')
     @Header('Cache-Control', 'no-store')
-    addresses(@CurrentUser() customer: { id: string }) {
+    addresses(@CurrentUser() customer: { id: number }) {
         return this.customers.addresses(customer.id);
     }
 
@@ -53,7 +53,7 @@ export class CustomerAccountController {
      */
     @Post('addresses')
     @Header('Cache-Control', 'no-store')
-    addAddress(@CurrentUser() customer: { id: string }, @Body() dto: ShippingAddressDto) {
+    addAddress(@CurrentUser() customer: { id: number }, @Body() dto: ShippingAddressDto) {
         return this.customers.addAddress(customer.id, dto);
     }
 
@@ -62,7 +62,7 @@ export class CustomerAccountController {
      */
     @Put('addresses/:id')
     @Header('Cache-Control', 'no-store')
-    updateAddress(@CurrentUser() customer: { id: string }, @Param('id') id: string, @Body() dto: ShippingAddressDto) {
+    updateAddress(@CurrentUser() customer: { id: number }, @Param('id', ParseIntPipe) id: number, @Body() dto: ShippingAddressDto) {
         return this.customers.updateAddress(customer.id, id, dto);
     }
 
@@ -71,7 +71,7 @@ export class CustomerAccountController {
      */
     @Delete('addresses/:id')
     @HttpCode(204)
-    deleteAddress(@CurrentUser() customer: { id: string }, @Param('id') id: string) {
+    deleteAddress(@CurrentUser() customer: { id: number }, @Param('id', ParseIntPipe) id: number) {
         return this.customers.deleteAddress(customer.id, id);
     }
 }

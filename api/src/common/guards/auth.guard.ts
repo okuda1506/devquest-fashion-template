@@ -47,7 +47,9 @@ export class AuthGuard implements CanActivate {
         const surface = payload.aud === audiences.ADMIN ? 'admin' : 'store';
         const role = roles[surface];
         if (payload.aud !== audiences[role]) throw new UnauthorizedException(authMessages.sessionExpired);
-        const viewer = await this.accounts.findViewer(payload.sub, surface);
+        const id = /^[1-9][0-9]*$/.test(payload.sub) ? Number(payload.sub) : 0;
+        if (!id || id > 2147483647) throw new UnauthorizedException(authMessages.sessionExpired);
+        const viewer = await this.accounts.findViewer(id, surface);
         if (!viewer) throw new UnauthorizedException(authMessages.sessionExpired);
         const required = this.reflector.getAllAndOverride<Role>('requiredRole', [
             context.getHandler(),

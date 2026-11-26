@@ -135,7 +135,7 @@ EC サイトで商品をカートに入れると、**カート → 配送先入�
 
 確定時に最新のカート・金額・在庫を照合します。同じ確認画面から確定を再送しても注文番号は変わりません。完了画面では注文番号を表示します。会員はマイページの注文履歴から購入内容を確認でき、店舗管理ではゲスト購入を含むすべての受注を参照できます。
 
-既存クローンを更新した場合は、`.env` を読み込んだターミナルで `npm run db:generate` と `npm run db:migrate` を実行してから、開発サーバーを再起動してください。会員情報とアドレス帳のマイグレーションは既存の顧客・注文・配送先を引き継ぎます。
+既存クローンを更新した場合は、`.env` を読み込んだターミナルで `npm run db:generate` と `npm run db:migrate` を実行してから、開発サーバーを再起動してください。整数 ID へのマイグレーションは既存の顧客・カート・注文・明細・配送先を引き継ぎ、ログイン済みの利用者は再ログインして再開できます。
 
 ## 店舗管理
 
@@ -152,6 +152,10 @@ EC サイトで商品をカートに入れると、**カート → 配送先入�
 ログイン先は EC が `POST /api/auth/store/login`、店舗管理が `POST /api/auth/admin/login` です。用途が異なるアカウントではログインできません。以前の共通ログインで発行されたトークンは有効範囲が異なるため、分離後はログインし直してください。
 
 各アプリはログイン時に発行されたセッションを別々にブラウザへ保存します。同じブラウザ・URL で開き直すと、ログインから1時間は共通 API の確認を経て再開できます。以前にタブ内だけに保存されたセッションは、更新後に一度ログインし直してください。API は署名、有効期限、発行元、トークンの対象アプリ、利用先に対応する顧客または店舗管理ユーザーが DB に存在することを確認します。Vite は各アプリの `/api` を共通 API に中継します。別ホストで起動する場合は、`THREAD_STORE_ORIGINS` と `THREAD_ADMIN_ORIGINS` に対応する URL のオリジンをコンマ区切りで設定します。
+
+## DB の ID と注文番号
+
+各テーブルの主キーを PostgreSQL が整数で採番します。注文画面と管理画面には `TH-00000001` の形式の注文番号を表示します。商品の URL と API には商品コード、注文 URL には照会用の参照キーを使います。削除やロールバック、重複を除外するシードの再実行などで整数 ID に欠番が生じることがあります。
 
 ## 開発・採点
 
@@ -186,7 +190,7 @@ API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定で�
 
 ### 大量データと性能計測
 
-標準 Seed（商品1,488件）を投入した演習 DB に `npm run db:seed:large` を実行すると、固定 ID の商品3,000件、架空の顧客600件、受注30,000件が追加されます。売り切れ・非公開商品・大量注文・過去の注文を含みます。同じ DB で再実行しても件数は増えません。通常の CI や過去課題では標準 Seed を使います。
+標準 Seed（商品1,488件）を投入した演習 DB に `npm run db:seed:large` を実行すると、固定の商品コードを持つ商品3,000件、架空の顧客600件、受注30,000件が追加されます。売り切れ・非公開商品・大量注文・過去の注文を含みます。同じ DB で再実行しても件数は増えません。通常の CI や過去課題では標準 Seed を使います。
 
 1. `.env` をシェルで読み込んで大量 Seed を投入し、`THREAD_LOG_LEVEL=debug` で API を起動します。
 2. `npm run benchmark:sales` を実行します。最初の1回を除いた5回の中央値と、照合に使えるリクエスト ID が表示されます。
@@ -196,16 +200,16 @@ API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定で�
 
 ### 採点の更新（すでに演習中の場合）
 
-新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。顧客・店舗管理アカウント分離版は採点タグ `thread-quests-v7` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v4 からの移行例です。
+新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。整数 ID 対応版は採点タグ `thread-quests-v8` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v7 からの移行例です。
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git switch -c chore/thread-quests-v7
-git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v4:refs/tags/thread-quests-v4 refs/tags/thread-quests-v7:refs/tags/thread-quests-v7
-git diff --binary thread-quests-v4 thread-quests-v7 -- . ':(exclude)README.md' | git apply --3way --index
+git switch -c chore/thread-quests-v8
+git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v7:refs/tags/thread-quests-v7 refs/tags/thread-quests-v8:refs/tags/thread-quests-v8
+git diff --binary thread-quests-v7 thread-quests-v8 -- . ':(exclude)README.md' | git apply --3way --index
 ```
 
-競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v7 と一致させます。旧版からは先に v4 までの差分を取り込みます。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
+競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v8 と一致させます。v6 以前から更新する場合は、作成時の採点タグと v8 の差分を確認してください。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。

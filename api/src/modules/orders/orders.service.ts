@@ -16,7 +16,7 @@ export class OrdersService {
     /**
      * 対象顧客の注文履歴を返す
      */
-    list(customerId: string) {
+    list(customerId: number) {
         return this.repo.list(customerId);
     }
 
@@ -48,7 +48,7 @@ export class OrdersService {
      * @returns 明細を含む注文
      * @throws NotFoundException 注文がないか顧客本人の注文ではない場合
      */
-    async detail(customerId: string, id: string) {
+    async detail(customerId: number, id: string) {
         const order = await this.repo.find(customerId, id);
         if (!order) throw new NotFoundException(orderMessages.notFound);
         return order;

@@ -24,7 +24,7 @@ export function CheckoutAddress() {
     const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
     const [selectedAddressId, setSelectedAddressId] = useState('');
     const [addressBookError, setAddressBookError] = useState(false);
-    const selectedAddress = savedAddresses.find(({ id }) => id === selectedAddressId);
+    const selectedAddress = savedAddresses.find(({ id }) => String(id) === selectedAddressId);
 
     useEffect(() => {
         if (!token) return;

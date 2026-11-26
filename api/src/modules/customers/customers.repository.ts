@@ -44,21 +44,21 @@ export class CustomersRepository {
     /**
      * 本人の表示用会員情報を取得する
      */
-    profile(id: string) {
+    profile(id: number) {
         return this.db.customer.findUnique({ where: { id }, select: profileFields });
     }
 
     /**
      * ログイン用メールの変更前に現在の認証情報を取得する
      */
-    credentials(id: string) {
+    credentials(id: number) {
         return this.db.customer.findUnique({ where: { id }, select: { email: true, passwordHash: true } });
     }
 
     /**
      * 取得時のメールと一致する会員情報を更新する
      */
-    async update(id: string, currentEmail: string, data: Prisma.CustomerUpdateManyMutationInput) {
+    async update(id: number, currentEmail: string, data: Prisma.CustomerUpdateManyMutationInput) {
         const [updated] = await this.db.customer.updateManyAndReturn({
             where: { id, email: currentEmail },
             data,
@@ -70,7 +70,7 @@ export class CustomersRepository {
     /**
      * 本人が登録した配送先のみを登録順に返す
      */
-    addresses(customerId: string) {
+    addresses(customerId: number) {
         return this.db.customerAddress.findMany({
             where: { customerId },
             select: addressFields,
@@ -81,14 +81,14 @@ export class CustomersRepository {
     /**
      * 本人のお届け先をアドレス帳に追加する
      */
-    addAddress(customerId: string, data: AddressData) {
+    addAddress(customerId: number, data: AddressData) {
         return this.db.customerAddress.create({ data: { ...data, customerId }, select: addressFields });
     }
 
     /**
      * 所有者と一致するお届け先だけを更新する
      */
-    async updateAddress(customerId: string, id: string, data: AddressData) {
+    async updateAddress(customerId: number, id: number, data: AddressData) {
         const [updated] = await this.db.customerAddress.updateManyAndReturn({
             where: { id, customerId },
             data,
@@ -100,7 +100,7 @@ export class CustomersRepository {
     /**
      * 所有者と一致するお届け先だけを削除する
      */
-    deleteAddress(customerId: string, id: string) {
+    deleteAddress(customerId: number, id: number) {
         return this.db.customerAddress.deleteMany({ where: { id, customerId } });
     }
 }

@@ -64,7 +64,7 @@ export function CheckoutComplete() {
                             <Check size={21} aria-hidden="true" />
                         </span>
                         <h2>注文番号</h2>
-                        <p className="checkout-order-id">{order.id}</p>
+                        <p className="checkout-order-id">{order.orderNumber ?? order.id}</p>
                         <p>{orderLabels[order.status]}</p>
                         {order.shippingAddress && <DeliveryDetails address={order.shippingAddress} />}
                         <div className="checkout-links">

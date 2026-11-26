@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { normalizeProductCode } from '../products/product-view';
 import type { UpdateStock } from './dto/update-stock.dto';
 
 /**
@@ -21,13 +22,13 @@ export class InventoryRepository {
      */
     update(id: string, { stock, expectedStock }: UpdateStock) {
         // 購入などで在庫が変わっていた場合は古い編集値で上書きしない
-        return this.db.product.updateMany({ where: { id, stock: expectedStock }, data: { stock } });
+        return this.db.product.updateMany({ where: { code: normalizeProductCode(id), stock: expectedStock }, data: { stock } });
     }
 
     /**
      * 在庫更新に失敗した商品が存在するかを ID で調べる
      */
     find(id: string) {
-        return this.db.product.findUnique({ where: { id }, select: { id: true } });
+        return this.db.product.findUnique({ where: { code: normalizeProductCode(id) }, select: { id: true } });
     }
 }
