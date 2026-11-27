@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../src/database/prisma.service';
 import { hashPassword } from '../../src/modules/auth/password';
+import { sampleCustomerName } from './sample-customers';
 
 const productCount = 3000;
 const orderCount = 30000;
@@ -23,10 +24,10 @@ function sequence() {
     };
 }
 
-const seedId = (type: string, number: number) => `large-seed-${type}-${String(number).padStart(6, '0')}`;
+const orderReference = (index: number) => 'large-seed-order-' + String(index).padStart(6, '0');
 
 /**
- * 一意な固定 ID で大量の架空データを一括投入する
+ * 商品コード・メール・注文参照キーで大量の架空データを一括投入する
  *
  * 既存レコードを上書きせず トランザクションで投入途中の状態を防ぐ
  * 演習用顧客のパスワードにはログインに使えないランダム値を使用する
@@ -36,7 +37,7 @@ async function seedLarge(db: PrismaService) {
     const products = Array.from({ length: productCount }, (_, index) => {
         const [category, model] = catalog[index % catalog.length];
         return {
-            id: seedId('product', index),
+            code: 'TH-B-' + String(index + 1).padStart(6, '0'),
             name: `${collection[next(collection.length)]} ${model} ${index + 1}`,
             description: '大規模データ演習用の商品',
             category,
@@ -47,25 +48,53 @@ async function seedLarge(db: PrismaService) {
     });
     const passwordHash = hashPassword(randomBytes(32).toString('hex'));
     const customers = Array.from({ length: customerCount }, (_, index) => ({
-        id: seedId('customer', index),
-        name: '演習用顧客 ' + (index + 1),
+        ...sampleCustomerName(index),
         email: `large-seed-${index}@example.test`,
         passwordHash
     }));
     await db.$transaction(
         async (tx) => {
-            await tx.product.createMany({ data: products, skipDuplicates: true });
-            await tx.user.createMany({ data: customers, skipDuplicates: true });
+            const categories = new Map((await tx.productCategory.findMany()).map(({ id, code }) => [code, id]));
+            const existingProducts = new Set((await tx.product.findMany({
+                where: { code: { startsWith: 'TH-B-' } },
+                select: { code: true }
+            })).map(({ code }) => code));
+            const existingCustomers = new Set((await tx.customer.findMany({
+                where: { email: { startsWith: 'large-seed-' } },
+                select: { email: true }
+            })).map(({ email }) => email));
+            await tx.product.createMany({
+                data: products
+                    .filter(({ code }) => !existingProducts.has(code))
+                    .map(({ category, ...product }) => ({ ...product, categoryId: categories.get(category)! })),
+                skipDuplicates: true
+            });
+            await tx.customer.createMany({
+                data: customers.filter(({ email }) => !existingCustomers.has(email)),
+                skipDuplicates: true
+            });
+            const existingOrders = new Set((await tx.order.findMany({
+                where: { reference: { startsWith: 'large-seed-order-' } },
+                select: { reference: true }
+            })).map(({ reference }) => reference));
+            if (Array.from({ length: orderCount }, (_, index) => orderReference(index)).every((key) => existingOrders.has(key))) return;
+
+            const productIds = new Map((await tx.product.findMany({
+                where: { code: { in: products.map((product) => product.code) } },
+                select: { id: true, code: true }
+            })).map(({ id, code }) => [code, id]));
+            const customerIds = new Map((await tx.customer.findMany({
+                where: { email: { in: customers.map((customer) => customer.email) } },
+                select: { id: true, email: true }
+            })).map(({ id, email }) => [email, id]));
             for (let offset = 0; offset < orderCount; offset += 500) {
                 const batch = Array.from({ length: 500 }, (_, row) => {
                     const index = offset + row;
-                    const id = seedId('order', index);
-                    const items = Array.from({ length: 1 + next(4) }, (_, position) => {
+                    const reference = orderReference(index);
+                    const items = Array.from({ length: 1 + next(4) }, () => {
                         const product = products[next(productCount)];
                         return {
-                            id: id + '-' + position,
-                            orderId: id,
-                            productId: product.id,
+                            productId: productIds.get(product.code)!,
                             name: product.name,
                             unitPrice: product.price,
                             quantity: index % 97 === 0 ? 50 + next(100) : 1 + next(5)
@@ -74,8 +103,8 @@ async function seedLarge(db: PrismaService) {
                     const age = next(540);
                     return {
                         order: {
-                            id,
-                            userId: customers[next(customerCount)].id,
+                            reference,
+                            customerId: customerIds.get(customers[next(customerCount)].email)!,
                             status: age > 14 || next(3) === 0 ? ('SHIPPED' as const) : ('PLACED' as const),
                             createdAt: new Date(start + age * 86400000 + next(86400000)),
                             total: items.reduce((total, item) => total + item.unitPrice * item.quantity, 0)
@@ -83,8 +112,19 @@ async function seedLarge(db: PrismaService) {
                         items
                     };
                 });
-                await tx.order.createMany({ data: batch.map(({ order }) => order), skipDuplicates: true });
-                await tx.orderItem.createMany({ data: batch.flatMap(({ items }) => items), skipDuplicates: true });
+                const pending = batch.map(({ order }) => order).filter(({ reference }) => !existingOrders.has(reference));
+                if (!pending.length) continue;
+                const inserted = await tx.order.createManyAndReturn({
+                    data: pending,
+                    select: { id: true, reference: true },
+                    skipDuplicates: true
+                });
+                const ids = new Map(inserted.map(({ id, reference }) => [reference, id]));
+                const lines = batch.flatMap(({ order, items }) => {
+                    const orderId = ids.get(order.reference);
+                    return orderId === undefined ? [] : items.map((item) => ({ ...item, orderId }));
+                });
+                if (lines.length) await tx.orderItem.createMany({ data: lines });
             }
         },
         { timeout: 120000 }

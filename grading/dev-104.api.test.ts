@@ -23,7 +23,7 @@ test('criterion-1: 公開一覧と検索から非公開商品を除外する', a
     expect(all.body.items.every((item: { isPublished: boolean }) => item.isPublished)).toBe(true);
     const search = await request(server).get('/api/products').query({ q: 'ウールコート' }).expect(200);
     expect(search.body.items).toEqual([]);
-    const category = await request(server).get('/api/products').query({ category: 'outerwear' }).expect(200);
+    const category = await request(server).get('/api/products').query({ q: 'フィールドジャケット', category: 'outerwear' }).expect(200);
     expect(category.body.items.map((item: { id: string }) => item.id)).toEqual(['field-jacket']);
 });
 
@@ -33,13 +33,13 @@ test('criterion-2: 公開商品の件数とページング', async () => {
     expect(search.body.total).toBe(0);
     const page = await request(server)
         .get('/api/products')
-        .query({ category: 'outerwear', page: 1, limit: 1 })
+        .query({ q: 'フィールドジャケット', category: 'outerwear', page: 1, limit: 1 })
         .expect(200);
     expect(page.body.items.map((item: { id: string }) => item.id)).toEqual(['field-jacket']);
     expect(page.body.total).toBe(1);
     const next = await request(server)
         .get('/api/products')
-        .query({ category: 'outerwear', page: 2, limit: 1 })
+        .query({ q: 'フィールドジャケット', category: 'outerwear', page: 2, limit: 1 })
         .expect(200);
     expect(next.body.items).toEqual([]);
 });

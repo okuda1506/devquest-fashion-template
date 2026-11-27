@@ -1,7 +1,7 @@
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { orderLabels, yen } from '@thread/shared';
+import { orderLabels, paymentMethodLabels, paymentStatusLabels, yen } from '@thread/shared';
 import { AdminFeedback } from '../../components/admin-feedback';
 import { useAdminList } from '../../hooks/use-admin-list';
 
@@ -19,7 +19,7 @@ export function ManageOrders() {
     );
     const keyword = query.trim().toLowerCase();
     const visible = data.items.filter((order) => {
-        const searchText = [order.id, order.user.name, order.user.email].join(' ').toLowerCase();
+        const searchText = [order.id, order.orderNumber, order.user.name, order.user.email].join(' ').toLowerCase();
         return searchText.includes(keyword) && (status === 'all' || order.status === status);
     });
     const locked = data.loading || data.saving;
@@ -62,7 +62,8 @@ export function ManageOrders() {
                         <summary>
                             <span>
                                 <strong>{order.user.name}</strong>
-                                <small className="admin-mono">{order.id}</small>
+                                {order.isGuest && <small>ゲスト購入</small>}
+                                <small className="admin-mono">{order.orderNumber ?? order.id}</small>
                             </span>
                             <time dateTime={order.createdAt}>{new Date(order.createdAt).toLocaleString('ja-JP')}</time>
                             <span className={'badge ' + (order.status === 'SHIPPED' ? 'positive' : '')}>
@@ -87,6 +88,28 @@ export function ManageOrders() {
                                     電話 {order.shippingAddress.phone}
                                 </p>
                             )}
+                            <dl className="admin-payment-details">
+                                <div>
+                                    <dt>決済方法</dt>
+                                    <dd>{paymentMethodLabels[order.paymentMethod ?? 'CASH_ON_DELIVERY']}</dd>
+                                </div>
+                                <div>
+                                    <dt>決済状況</dt>
+                                    <dd>{paymentStatusLabels[order.paymentStatus ?? 'PENDING']}</dd>
+                                </div>
+                                <div>
+                                    <dt>決済日時</dt>
+                                    <dd>
+                                        {order.paymentPaidAt ? (
+                                            <time dateTime={order.paymentPaidAt}>{new Date(order.paymentPaidAt).toLocaleString('ja-JP')}</time>
+                                        ) : '—'}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>模擬取引ID</dt>
+                                    <dd className="admin-mono">{order.paymentTransactionId ?? '—'}</dd>
+                                </div>
+                            </dl>
                             <table>
                                 <caption>注文明細</caption>
                                 <thead>

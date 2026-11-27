@@ -88,7 +88,6 @@ input::placeholder {
     top: 0;
     z-index: 10;
     color: var(--header-ink);
-    border-bottom: 1px solid var(--line);
     background-color: white;
 }
 .header--home {
@@ -99,7 +98,6 @@ input::placeholder {
     --header-ink: white;
     --header-badge-text: var(--ink);
     background-color: transparent;
-    border-color: rgb(255 255 255 / 0.24);
 }
 .header--home:not([data-scrolled]) :focus-visible {
     outline-color: white;
@@ -358,6 +356,13 @@ main {
 }
 .catalog-search input {
     width: clamp(100px, 11vw, 170px);
+}
+.catalog-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
 }
 .products {
     display: grid;

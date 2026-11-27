@@ -11,7 +11,7 @@ export function requestLogLevel(status: number) {
 /**
  * 明示的に選んだ診断項目を1行の JSON として出力する
  *
- * 呼び出し元から URL・SQL・例外本文・業務データを渡さない
+ * 呼び出し元から URL・SQL・例外本文・カード情報を渡さない
  */
 export function logEvent(
     level: LogLevel,
@@ -22,6 +22,9 @@ export function logEvent(
         status?: number;
         elapsedMs?: number;
         reason?: string;
+        orderId?: string;
+        transactionId?: string;
+        errorCode?: string;
     } = {}
 ) {
     if (logLevels[level] < logLevels[logLevel()]) return;

@@ -2,10 +2,10 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Unauthor
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { AuthRepository } from '../../modules/auth/auth.repository';
-import type { Role } from '../../generated/prisma/client';
+import type { Role } from '../../modules/auth/auth.config';
 import { allowedOrigins } from '../../config/environment';
 import type { AuthRequest } from '../../modules/auth/auth.types';
-import { audiences, issuer, sessionLifetimeSeconds } from '../../modules/auth/auth.config';
+import { audiences, roles, issuer, sessionLifetimeSeconds } from '../../modules/auth/auth.config';
 import { authMessages } from '../../modules/auth/auth-messages';
 
 /**
@@ -23,7 +23,7 @@ export class AuthGuard implements CanActivate {
     ) {}
 
     /**
-     * JWT と DB 上の現在の権限を照合して認証済み利用者を設定する
+     * JWT の利用先と対応するアカウントテーブルを照合する
      *
      * @param context HTTP リクエストと権限定義を参照する実行コンテキスト
      * @returns 認証済み利用者を設定できた場合に true
@@ -44,19 +44,23 @@ export class AuthGuard implements CanActivate {
         if (typeof payload?.sub !== 'string' || typeof payload.exp !== 'number') {
             throw new UnauthorizedException(authMessages.sessionExpired);
         }
-        const viewer = await this.accounts.findViewer(payload.sub);
-        if (!viewer || payload.aud !== audiences[viewer.role])
-            throw new UnauthorizedException(authMessages.sessionExpired);
+        const surface = payload.aud === audiences.ADMIN ? 'admin' : 'store';
+        const role = roles[surface];
+        if (payload.aud !== audiences[role]) throw new UnauthorizedException(authMessages.sessionExpired);
+        const id = /^[1-9][0-9]*$/.test(payload.sub) ? Number(payload.sub) : 0;
+        if (!id || id > 2147483647) throw new UnauthorizedException(authMessages.sessionExpired);
+        const viewer = await this.accounts.findViewer(id, surface);
+        if (!viewer) throw new UnauthorizedException(authMessages.sessionExpired);
         const required = this.reflector.getAllAndOverride<Role>('requiredRole', [
             context.getHandler(),
             context.getClass()
         ]);
-        if (viewer.role !== required) throw new ForbiddenException(authMessages.forbidden);
+        if (role !== required) throw new ForbiddenException(authMessages.forbidden);
         const origin = request.headers.origin;
-        if (origin !== undefined && !allowedOrigins(viewer.role === 'ADMIN' ? 'admin' : 'store').includes(origin)) {
+        if (origin !== undefined && !allowedOrigins(surface).includes(origin)) {
             throw new ForbiddenException(authMessages.forbidden);
         }
-        request.viewer = viewer;
+        request.viewer = { ...viewer, role };
         return true;
     }
 }

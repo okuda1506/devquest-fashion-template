@@ -24,14 +24,14 @@ export class CheckoutController {
     /**
      * 入力された配送先とカートで注文内容を確認する
      */
-    @Post('preview') preview(@CurrentUser() user: { id: string }, @Body() input: PreviewOrderDto) {
+    @Post('preview') preview(@CurrentUser() user: { id: number }, @Body() input: PreviewOrderDto) {
         return this.checkout.preview(user.id, input);
     }
 
     /**
      * 確認時の識別子とバージョンを使って注文を確定する
      */
-    @Post() place(@CurrentUser() user: { id: string }, @Body() input: PlaceOrderDto) {
+    @Post() place(@CurrentUser() user: { id: number }, @Body() input: PlaceOrderDto) {
         return this.checkout.place(user.id, input);
     }
 }

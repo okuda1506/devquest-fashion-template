@@ -1,0 +1,84 @@
+.account-heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.account-heading h1 {
+    margin: 0;
+}
+
+.account-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(28px, 6vw, 72px);
+}
+
+.account-fields {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.account-field-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.account-fields > button {
+    justify-self: start;
+}
+
+.login-page .account-fields > button {
+    justify-self: stretch;
+}
+
+.account-form-link {
+    margin: 24px 0 0;
+}
+
+.account-addresses {
+    padding: 0;
+    margin: 12px 0;
+    list-style: none;
+}
+
+.account-addresses li > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.account-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-address-actions {
+    margin-top: 14px;
+}
+
+button.account-secondary {
+    background: white;
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+button.account-secondary:hover:not(:disabled) {
+    background: #f3f3f3;
+    color: var(--ink);
+}
+
+@media (max-width: 740px) {
+    .account-columns {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+}

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CustomersModule } from './modules/customers/customers.module';
 import { ProductsModule } from './modules/products/products.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { CartModule } from './modules/cart/cart.module';
@@ -15,6 +16,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     imports: [
         DatabaseModule,
         AuthModule,
+        CustomersModule,
         ProductsModule,
         InventoryModule,
         CartModule,

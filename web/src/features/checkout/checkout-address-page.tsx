@@ -1,25 +1,40 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { type ShippingAddress } from '@thread/shared';
 import { api } from '@thread/shared';
+import { guestCartLines } from '../cart/guest-cart';
 import { useCart } from '../cart/cart-state';
 import { CheckoutPage } from './checkout-layout';
 import type { CheckoutContext, CheckoutReview } from './checkout.types';
+import type { CustomerAddress } from '../account/account.types';
+import { ShippingFields, readShippingAddress } from './shipping-fields';
+import { guestCheckoutPath, guestOrderApi } from './guest-order-session';
 import { OrderSummary } from './order-summary';
-
-const prefectures =
-    '北海道 青森県 岩手県 宮城県 秋田県 山形県 福島県 茨城県 栃木県 群馬県 埼玉県 千葉県 東京都 神奈川県 新潟県 富山県 石川県 福井県 山梨県 長野県 岐阜県 静岡県 愛知県 三重県 滋賀県 京都府 大阪府 兵庫県 奈良県 和歌山県 鳥取県 島根県 岡山県 広島県 山口県 徳島県 香川県 愛媛県 高知県 福岡県 佐賀県 長崎県 熊本県 大分県 宮崎県 鹿児島県 沖縄県'.split(
-        ' '
-    );
 
 /** 配送先を入力して注文内容の確認へ進む */
 export function CheckoutAddress() {
-    const { token, address, setAddress, setReview } = useOutletContext<CheckoutContext>();
-    const { items: cart, loadError, refresh } = useCart();
+    const context = useOutletContext<CheckoutContext>();
+    const { guest, token, address, setAddress, setReview } = context;
+    const { items: memberCart, guestItems, loadError, refresh } = useCart();
+    const cart = guest ? guestItems : memberCart;
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
     const navigate = useNavigate();
+    const addressBookLabel = useId();
+    const [savedAddresses, setSavedAddresses] = useState<CustomerAddress[]>([]);
+    const [selectedAddressId, setSelectedAddressId] = useState('');
+    const [addressBookError, setAddressBookError] = useState(false);
+    const selectedAddress = savedAddresses.find(({ id }) => String(id) === selectedAddressId);
+
+    useEffect(() => {
+        if (!token) return;
+        const controller = new AbortController();
+        void api<CustomerAddress[]>('/customers/me/addresses', { signal: controller.signal }, token).then(
+            (addresses) => { if (!controller.signal.aborted) setSavedAddresses(addresses); },
+            () => { if (!controller.signal.aborted) setAddressBookError(true); }
+        );
+        return () => controller.abort();
+    }, [token]);
 
     const items = (cart ?? []).map(({ product, quantity }) => ({
         productId: product.id,
@@ -33,18 +48,10 @@ export function CheckoutAddress() {
     async function confirm(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (busy) return;
-        const data = new FormData(event.currentTarget);
-        // フォームに入力された配送先の値をトリムして取得する
-        const field = (name: keyof ShippingAddress) => String(data.get(name) ?? '').trim();
-        const shippingAddress = {
-            name: field('name'),
-            postalCode: field('postalCode'),
-            prefecture: field('prefecture'),
-            city: field('city'),
-            line1: field('line1'),
-            line2: field('line2'),
-            phone: field('phone')
-        };
+        const form = event.currentTarget;
+        const shippingAddress = readShippingAddress(form);
+        const guestEmail = guest ? String(new FormData(form).get('email') ?? '').trim() : '';
+        if (guest) context.setEmail(guestEmail);
         setAddress(shippingAddress);
         setReview(undefined);
         if (!shippingAddress.name || !shippingAddress.city || !shippingAddress.line1) {
@@ -54,14 +61,19 @@ export function CheckoutAddress() {
         setBusy(true);
         setError('');
         try {
-            const review = await api<CheckoutReview>(
-                '/orders/preview',
-                { method: 'POST', body: JSON.stringify({ shippingAddress }) },
-                token
-            );
+            const review = guest
+                ? await guestOrderApi<CheckoutReview>('/preview', {
+                    method: 'POST',
+                    body: JSON.stringify({ shippingAddress, email: guestEmail, items: guestCartLines(guestItems) })
+                })
+                : await api<CheckoutReview>(
+                    '/orders/preview',
+                    { method: 'POST', body: JSON.stringify({ shippingAddress }) },
+                    token
+                );
             setAddress(review.shippingAddress);
             setReview(review);
-            navigate('/checkout/confirm');
+            navigate((guest ? guestCheckoutPath : '/checkout') + '/confirm');
         } catch (cause) {
             setError((cause as Error).message);
         } finally {
@@ -70,11 +82,11 @@ export function CheckoutAddress() {
     }
 
     return (
-        <CheckoutPage step={1} title="配送先を入力">
+        <CheckoutPage step={1} title={guest ? 'ゲスト購入のお届け先' : '配送先を入力'}>
             <Link className="back-link" to="/cart">
                 <ArrowLeft size={15} aria-hidden="true" /> カートへ戻る
             </Link>
-            {loadError ? (
+            {!guest && loadError ? (
                 <div>
                     <p role="alert">{loadError}</p>
                     <button onClick={refresh}>再試行</button>
@@ -91,91 +103,40 @@ export function CheckoutAddress() {
                         <form className="checkout-form" onSubmit={confirm}>
                             <fieldset disabled={busy}>
                                 <legend>お届け先</legend>
-                                <label>
-                                    お名前
-                                    <input
-                                        name="name"
-                                        autoComplete="shipping name"
-                                        maxLength={100}
-                                        defaultValue={address?.name}
-                                        required
-                                    />
-                                </label>
-                                <div className="checkout-fields">
+                                {guest && (
                                     <label>
-                                        郵便番号
+                                        ご連絡先メールアドレス
                                         <input
-                                            name="postalCode"
-                                            autoComplete="shipping postal-code"
-                                            inputMode="numeric"
-                                            placeholder="100-0001"
-                                            pattern="[0-9]{3}-?[0-9]{4}"
-                                            maxLength={8}
-                                            defaultValue={address?.postalCode}
+                                            type="email"
+                                            name="email"
+                                            autoComplete="email"
+                                            maxLength={254}
+                                            defaultValue={context.email}
                                             required
                                         />
                                     </label>
+                                )}
+                                {savedAddresses.length > 0 && (
                                     <label>
-                                        都道府県
+                                        <span id={addressBookLabel}>アドレス帳から選ぶ</span>
                                         <select
-                                            name="prefecture"
-                                            autoComplete="shipping address-level1"
-                                            defaultValue={address?.prefecture ?? ''}
-                                            required
+                                            aria-labelledby={addressBookLabel}
+                                            value={selectedAddressId}
+                                            onChange={(event) => setSelectedAddressId(event.target.value)}
                                         >
-                                            <option value="">選択してください</option>
-                                            {prefectures.map((prefecture) => (
-                                                <option key={prefecture}>{prefecture}</option>
+                                            <option value="">自分で入力する</option>
+                                            {savedAddresses.map(({ id, name, prefecture, city, line1 }) => (
+                                                <option key={id} value={id}>{name} ／ {prefecture}{city}{line1}</option>
                                             ))}
                                         </select>
                                     </label>
-                                </div>
-                                <label>
-                                    市区町村
-                                    <input
-                                        name="city"
-                                        autoComplete="shipping address-level2"
-                                        maxLength={100}
-                                        defaultValue={address?.city}
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    番地
-                                    <input
-                                        name="line1"
-                                        autoComplete="shipping address-line1"
-                                        maxLength={120}
-                                        defaultValue={address?.line1}
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    建物名・部屋番号（任意）
-                                    <input
-                                        name="line2"
-                                        autoComplete="shipping address-line2"
-                                        maxLength={120}
-                                        defaultValue={address?.line2}
-                                    />
-                                </label>
-                                <label>
-                                    電話番号
-                                    <input
-                                        name="phone"
-                                        type="tel"
-                                        autoComplete="shipping tel"
-                                        placeholder="090-1234-5678"
-                                        pattern="([0-9]-?){9,10}[0-9]"
-                                        maxLength={14}
-                                        defaultValue={address?.phone}
-                                        required
-                                    />
-                                </label>
+                                )}
+                                {addressBookError && <p role="status">アドレス帳を取得できませんでした。お届け先を入力してください。</p>}
+                                <ShippingFields key={selectedAddressId} address={selectedAddress ?? address} />
                             </fieldset>
                             <div className="checkout-method">
                                 <h2>配送・お支払い</h2>
-                                <p>宅配便（送料無料）／ 代金引換（模擬）</p>
+                                <p>宅配便（送料無料）。お支払い方法は注文確認画面で選べます。</p>
                             </div>
                             {error && (
                                 <p className="checkout-error" role="alert">

@@ -1,7 +1,7 @@
 import { categories, type Product } from '@thread/shared';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ShoppingBag } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { ProductVisual } from './product-visual';
 import { api, yen } from '@thread/shared';
 import { useSession } from '@thread/shared/session';
@@ -10,7 +10,7 @@ import { AddToCart } from './add-to-cart';
 /** 商品情報と購入数量を選べるカート追加欄を表示する */
 export function ProductDetail({ cartIcon }: { cartIcon: RefObject<HTMLSpanElement | null> }) {
     const { id } = useParams();
-    const { session } = useSession();
+    const { session, checking } = useSession();
     const productImage = useRef<HTMLImageElement>(null);
     const [result, setResult] = useState<{ id?: string; item?: Product; error?: string }>({});
     useEffect(() => {
@@ -41,19 +41,15 @@ export function ProductDetail({ cartIcon }: { cartIcon: RefObject<HTMLSpanElemen
                     <strong className="detail-price">{yen(product.price)}</strong>
                     <p className="detail-description">{product.description}</p>
                     <p>{product.stock > 0 ? `在庫 ${product.stock} 点` : '在庫切れ'}</p>
-                    {session ? (
+                    {checking ? (
+                        <p role="status">カートを準備しています…</p>
+                    ) : (
                         <AddToCart
-                            key={product.id + ':' + session.token}
+                            key={product.id + ':' + (session?.token ?? 'guest')}
                             product={product}
-                            token={session.token}
                             cartIcon={cartIcon}
                             productImage={productImage}
                         />
-                    ) : (
-                        <Link className="action-link detail-add" to="/login">
-                            <ShoppingBag size={18} aria-hidden="true" /> ログインして購入{' '}
-                            <ArrowRight size={17} aria-hidden="true" />
-                        </Link>
                     )}
                 </section>
             </div>

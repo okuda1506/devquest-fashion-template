@@ -11,8 +11,8 @@ import { hashPassword } from '../api/src/modules/auth/password';
 let app: INestApplication;
 let db: PrismaService;
 let admin: string;
-let user: string;
-let other: string;
+let user: number;
+let other: number;
 let shopper: string;
 let otherShopper: string;
 let prefix: string;
@@ -58,7 +58,7 @@ const cart = (id: string, quantity: number) =>
         .send({ quantity })
         .expect(200);
 const itemIds = (items: { id: string }[]) => items.map(({ id }) => id);
-const stock = async (id: string) => (await db.product.findUniqueOrThrow({ where: { id } })).stock;
+const stock = async (id: string) => (await db.product.findUniqueOrThrow({ where: { code: id } })).stock;
 
 beforeAll(async () => {
     const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
@@ -75,28 +75,28 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-    prefix = 'quest-' + randomUUID();
+    prefix = '00-quest-' + randomUUID();
     async function account(suffix: string) {
         const email = prefix + suffix + '@example.test';
-        const { id } = await db.user.create({
-            data: { email, name: '演習の顧客', passwordHash: hashPassword('thread-quest') }
+        const { id } = await db.customer.create({
+            data: { email, lastName: '演習の顧客', passwordHash: hashPassword('thread-quest') }
         });
         const { body } = await http()
             .post('/api/auth/store/login')
             .send({ email, password: 'thread-quest' })
             .expect(201);
-        return [id, body.token];
+        return [id, body.token as string] as const;
     }
     [user, shopper] = await account('-a');
     [other, otherShopper] = await account('-b');
 });
 
 afterEach(async () => {
-    const where = { userId: { in: [user, other] } };
+    const where = { customerId: { in: [user, other] } };
     await db.cartItem.deleteMany({ where });
     await db.order.deleteMany({ where });
-    await db.product.deleteMany({ where: { id: { startsWith: prefix } } });
-    await db.user.deleteMany({ where: { id: where.userId } });
+    await db.product.deleteMany({ where: { code: { startsWith: prefix } } });
+    await db.customer.deleteMany({ where: { id: where.customerId } });
 });
 
 afterAll(async () => {
@@ -105,23 +105,26 @@ afterAll(async () => {
 
 async function product(suffix = 'item', price = 1000, stock = 4, isPublished = true, category = 'tops') {
     const id = prefix + '-' + suffix;
-    await db.product.create({ data: { id, name: id, description: '採点用', category, price, stock, isPublished } });
+    await db.product.create({ data: { code: id, name: id, description: '採点用', productCategory: { connect: { code: category } }, price, stock, isPublished } });
     return id;
 }
 async function order(
     suffix: string,
-    options: { owner?: string; createdAt?: string; shipped?: boolean; item?: string } = {}
+    options: { owner?: number; createdAt?: string; shipped?: boolean; item?: string } = {}
 ) {
     const id = prefix + '-' + suffix;
+    const productKey = options.item
+        ? (await db.product.findUniqueOrThrow({ where: { code: options.item }, select: { id: true } })).id
+        : undefined;
     await db.order.create({
         data: {
-            id,
-            userId: options.owner ?? user,
+            reference: id,
+            customerId: options.owner ?? user,
             total: 1000,
             status: options.shipped ? 'SHIPPED' : 'PLACED',
             createdAt: options.createdAt,
             items: options.item
-                ? { create: { productId: options.item, quantity: 2, unitPrice: 500, name: '購入時の商品名' } }
+                ? { create: { productId: productKey!, quantity: 2, unitPrice: 500, name: '購入時の商品名' } }
                 : undefined
         }
     });
@@ -364,11 +367,11 @@ criteria(129, {
         const source = await product('source');
         await Promise.all(['a', 'b', 'c', 'd'].map((id) => product(id)));
         const expected = await db.product.findMany({
-            where: { category: 'tops', isPublished: true, id: { not: source } },
-            orderBy: { id: 'asc' },
+            where: { productCategory: { code: 'tops' }, isPublished: true, code: { not: source } },
+            orderBy: { code: 'asc' },
             take: 3
         });
-        expect(itemIds((await related(source).expect(200)).body)).toEqual(itemIds(expected));
+        expect(itemIds((await related(source).expect(200)).body)).toEqual(expected.map(({ code }) => code));
     },
     3: async () => {
         const source = await product();
@@ -386,7 +389,7 @@ criteria(130, {
         expect((await adminOrder(id).expect(200)).body).toMatchObject({
             id,
             items: [{ productId: item, unitPrice: 500, quantity: 2 }],
-            user: { name: '演習の顧客', email: prefix + '-b@example.test' }
+            user: { lastName: '演習の顧客', email: prefix + '-b@example.test' }
         });
     },
     2: async () => {
@@ -412,7 +415,7 @@ async function checkoutFixture() {
     await cart(a, 2);
     await cart(b, 2);
     const { body } = await preview().expect(201);
-    await db.product.update({ where: { id: a }, data: { stock: 1 } });
+    await db.product.update({ where: { code: a }, data: { stock: 1 } });
     return { a, b, quote: body };
 }
 criteria(108, {
@@ -423,13 +426,13 @@ criteria(108, {
     2: async () => {
         const { a, quote } = await checkoutFixture();
         expect((await place(quote).expect(409)).body).toMatchObject({ code: 'INSUFFICIENT_STOCK', productIds: [a] });
-        expect(await db.order.count({ where: { userId: user } })).toBe(0);
+        expect(await db.order.count({ where: { customerId: user } })).toBe(0);
     },
     3: async () => {
         const { a, b, quote } = await checkoutFixture();
         const c = await product('c');
         await cart(c, 1);
-        await db.product.update({ where: { id: b }, data: { stock: 0 } });
+        await db.product.update({ where: { code: b }, data: { stock: 0 } });
         const { body } = await place(quote).expect(409);
         expect(body.productIds).toEqual(expect.arrayContaining([a, b]));
         expect(body.productIds).toHaveLength(2);
@@ -451,7 +454,7 @@ criteria(117, {
         const id = await product('price', 4999);
         await cart(id, 1);
         expect((await preview().expect(201)).body).toMatchObject({ subtotal: 4999, shippingFee: 500, total: 5499 });
-        await db.product.update({ where: { id }, data: { price: 5000 } });
+        await db.product.update({ where: { code: id }, data: { price: 5000 } });
         expect((await preview().expect(201)).body).toMatchObject({ subtotal: 5000, shippingFee: 0, total: 5000 });
     },
     2: async () => {
@@ -460,7 +463,7 @@ criteria(117, {
         const quote = (await preview().expect(201)).body;
         const { body } = await place(quote).expect(201);
         expect(body.total).toBe(3000);
-        expect((await db.order.findUniqueOrThrow({ where: { id: body.id } })).total).toBe(3000);
+        expect((await db.order.findUniqueOrThrow({ where: { reference: body.id } })).total).toBe(3000);
     }
 });
 
@@ -529,10 +532,10 @@ criteria(111, {
         await inventory(id).send({ stock: 8, reason: '追加' }).expect(200);
         const { body } = await audit(id).expect(200);
         expect(body).toMatchObject([
-            { after: 8, operatorId: expect.any(String), createdAt: expect.any(String) },
+            { after: 8, operatorId: expect.any(Number), createdAt: expect.any(String) },
             { after: 7 }
         ]);
-        const operator = await db.user.findUniqueOrThrow({ where: { email: 'admin@example.test' } });
+        const operator = await db.member.findUniqueOrThrow({ where: { email: 'admin@example.test' } });
         expect(body[0].operatorId).toBe(operator.id);
         expect(Date.parse(body[0].createdAt)).toBeGreaterThanOrEqual(Date.parse(body[1].createdAt));
     },
@@ -722,7 +725,7 @@ criteria(140, {
         await http()
             .get('/api/products/' + id)
             .expect(404);
-        expect((await db.product.findUniqueOrThrow({ where: { id } })).isPublished).toBe(false);
+        expect((await db.product.findUniqueOrThrow({ where: { code: id } })).isPublished).toBe(false);
     },
     2: async () => {
         const item = await product();
@@ -731,7 +734,7 @@ criteria(140, {
         expect((await adminOrder(id).expect(200)).body.items).toMatchObject([
             { productId: item, name: '購入時の商品名', quantity: 2 }
         ]);
-        expect(await db.product.count({ where: { id: item } })).toBe(1);
+        expect(await db.product.count({ where: { code: item } })).toBe(1);
     },
     3: async () => {
         const id = await product();

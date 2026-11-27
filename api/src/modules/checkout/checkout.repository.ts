@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
-import type { CheckoutItem } from './checkout-quote';
+import { orderDetails, orderView } from '../orders/order-shipping-address';
+import type { GuestCartLineDto } from './dto/guest-checkout.dto';
+import { normalizeProductCode } from '../products/product-view';
 
 /**
  * 購入確定で在庫・注文・カートを同じトランザクションから操作する
@@ -16,12 +18,24 @@ export class CheckoutRepository {
     /**
      * 見積もりに必要な商品情報付きのカート明細を取得する
      */
-    cart(userId: string, source: Pick<Prisma.TransactionClient, 'cartItem'> = this.db) {
+    cart(customerId: number, source: Pick<Prisma.TransactionClient, 'cartItem'> = this.db) {
         return source.cartItem.findMany({
-            where: { userId },
+            where: { customerId },
             include: { product: true },
             orderBy: { productId: 'asc' }
         });
+    }
+
+    /**
+     * ゲストのカートに含まれる商品を現在の値で取得する
+     */
+    async guestCart(items: GuestCartLineDto[], db: Pick<Prisma.TransactionClient, 'product'> = this.db) {
+        const quantities = new Map(items.map((item) => [normalizeProductCode(item.productId), item.quantity]));
+        const products = await db.product.findMany({
+            where: { code: { in: [...quantities.keys()] } },
+            orderBy: { id: 'asc' }
+        });
+        return products.map((product) => ({ product, quantity: quantities.get(product.code)! }));
     }
 
     /**
@@ -34,24 +48,35 @@ export class CheckoutRepository {
     /**
      * 在庫に余裕がある公開商品だけを原子的に減算する
      */
-    reduceStock(item: CheckoutItem, db: Prisma.TransactionClient) {
+    reduceStock(productId: number, quantity: number, db: Prisma.TransactionClient) {
         return db.product.updateMany({
-            where: { id: item.productId, isPublished: true, stock: { gte: item.quantity } },
-            data: { stock: { decrement: item.quantity } }
+            where: { id: productId, isPublished: true, stock: { gte: quantity } },
+            data: { stock: { decrement: quantity } }
         });
     }
 
     /**
-     * 確認 ID を注文 ID として明細と配送先を保存する
+     * 確認 ID を再送時の参照キーとして明細と配送先を保存する
      */
-    createOrder(data: Prisma.OrderUncheckedCreateInput, db: Prisma.TransactionClient) {
-        return db.order.create({ data, include: { items: true } });
+    async createOrder(data: Prisma.OrderUncheckedCreateInput, db: Prisma.TransactionClient) {
+        return orderView(await db.order.create({ ...orderDetails, data }));
+    }
+
+    /**
+     * 決済結果を同じ注文に保存して更新後の注文情報を返す
+     */
+    async savePayment(
+        reference: string,
+        payment: Pick<Prisma.OrderUpdateInput, 'paymentMethod' | 'paymentStatus' | 'paymentPaidAt' | 'paymentTransactionId'>,
+        db: Prisma.TransactionClient
+    ) {
+        return orderView(await db.order.update({ ...orderDetails, where: { reference }, data: payment }));
     }
 
     /**
      * 確定済みのカート明細を削除する
      */
-    clearCart(userId: string, db: Prisma.TransactionClient) {
-        return db.cartItem.deleteMany({ where: { userId } });
+    clearCart(customerId: number, db: Prisma.TransactionClient) {
+        return db.cartItem.deleteMany({ where: { customerId } });
     }
 }

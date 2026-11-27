@@ -408,3 +408,22 @@ textarea {
         text-align: right;
     }
 }
+
+.admin-payment-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+    gap: 12px 20px;
+    margin: 16px 0;
+    padding: 12px 0;
+    border-block: 1px solid var(--line);
+}
+
+.admin-payment-details dt {
+    font-size: 12px;
+    color: var(--subtle);
+}
+
+.admin-payment-details dd {
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+}

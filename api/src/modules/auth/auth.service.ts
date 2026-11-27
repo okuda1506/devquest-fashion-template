@@ -6,6 +6,7 @@ import { AuthRepository } from './auth.repository';
 import { hashPassword, verifyPassword } from './password';
 import { allowedOrigins, type Surface } from '../../config/environment';
 import { roles, audiences, issuer, sessionLifetimeSeconds } from './auth.config';
+import { formatAccountName } from './account-name';
 import type { LoginDto } from './dto/login.dto';
 
 /**
@@ -36,15 +37,16 @@ export class AuthService {
     async login(input: LoginDto, surface: Surface, origin?: string) {
         if (origin !== undefined && !allowedOrigins(surface).includes(origin))
             throw new UnauthorizedException(authMessages.loginDenied);
-        const user = await this.accounts.findByEmail(input.email.toLowerCase());
+        const user = await this.accounts.findByEmail(input.email.toLowerCase(), surface);
         // メールアドレスの登録有無による応答の差を抑えるため未登録でもハッシュを照合する
         const valid = verifyPassword(input.password, user?.passwordHash ?? this.dummyHash);
-        if (!valid || user?.role !== roles[surface]) throw new UnauthorizedException(authMessages.loginDenied);
+        if (!valid || !user) throw new UnauthorizedException(authMessages.loginDenied);
+        const role = roles[surface];
         const exp = Math.floor(Date.now() / 1000) + sessionLifetimeSeconds;
         const token = await this.jwt.signAsync(
-            { sub: user.id, exp },
-            { issuer, audience: audiences[user.role], algorithm: 'HS256' }
+            { sub: String(user.id), exp },
+            { issuer, audience: audiences[role], algorithm: 'HS256' }
         );
-        return { token, name: user.name, role: user.role, expiresAt: exp * 1000 };
+        return { token, name: formatAccountName(user), role, expiresAt: exp * 1000 };
     }
 }

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Surface } from '../../config/environment';
 import { PrismaService } from '../../database/prisma.service';
 
 /**
@@ -14,14 +15,17 @@ export class AuthRepository {
     /**
      * メールアドレスから資格情報の照合に使うアカウントを取得する
      */
-    findByEmail(email: string) {
-        return this.db.user.findUnique({ where: { email } });
+    findByEmail(email: string, surface: Surface) {
+        return surface === 'admin'
+            ? this.db.member.findUnique({ where: { email } })
+            : this.db.customer.findUnique({ where: { email } });
     }
 
     /**
-     * セッションに対応するアカウント ID と現在の権限を取得する
+     * セッションの利用先に対応するアカウントが現存するか確認する
      */
-    findViewer(id: string) {
-        return this.db.user.findUnique({ where: { id }, select: { id: true, role: true } });
+    findViewer(id: number, surface: Surface) {
+        const query = { where: { id }, select: { id: true } };
+        return surface === 'admin' ? this.db.member.findUnique(query) : this.db.customer.findUnique(query);
     }
 }

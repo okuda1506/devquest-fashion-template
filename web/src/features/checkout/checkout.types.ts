@@ -7,13 +7,16 @@ export type CheckoutReview = {
     total: number;
     shippingAddress: ShippingAddress;
     checkoutId: string;
+    email?: string;
     version: string;
 };
 
 export type CheckoutContext = {
-    token: string;
     address?: ShippingAddress;
     review?: CheckoutReview;
     setAddress: (address?: ShippingAddress) => void;
     setReview: (review?: CheckoutReview) => void;
-};
+} & (
+    | { guest?: false; token: string }
+    | { guest: true; token?: never; email: string; setEmail: (email: string) => void }
+);

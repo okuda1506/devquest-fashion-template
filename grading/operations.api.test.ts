@@ -11,7 +11,7 @@ let db: PrismaService;
 let admin: string;
 let customer: string;
 let queries = 0;
-const fixture = 'grade-operations-';
+const fixture = '00-grade-operations-';
 const auth = { type: 'bearer' } as const;
 const http = () => request(app.getHttpServer());
 const report = (day: string) => http().get('/api/admin/reports/daily-sales').query({ day }).auth(admin, auth);
@@ -44,18 +44,20 @@ beforeAll(async () => {
         .send({ email: 'customer@example.test', password: 'thread-customer' })
         .expect(201);
     customer = customerLogin.body.token;
-    const owner = await db.user.findUniqueOrThrow({ where: { email: 'customer@example.test' } });
+    const owner = await db.customer.findUniqueOrThrow({ where: { email: 'customer@example.test' } });
+    const category = await db.productCategory.findUniqueOrThrow({ where: { code: 'tops' } });
     await db.product.createMany({
         data: Array.from({ length: 25 }, (_, index) => ({
-            id: productId(index),
+            code: productId(index),
             name: '売上集計の採点商品',
             description: '採点用',
             stock: 20,
             price: 600,
-            category: 'tops',
+            categoryId: category.id,
             isPublished: index !== 2
         }))
     });
+    const soldProduct = await db.product.findUniqueOrThrow({ where: { code: productId(2) } });
     for (const [suffix, createdAt, total, status, quantity] of [
         ['before', '2092-08-17T23:59:59.999Z', 600, 'SHIPPED', 1],
         ['start', day + 'T00:00:00.000Z', 1200, 'PLACED', 2],
@@ -64,12 +66,12 @@ beforeAll(async () => {
     ] as const) {
         await db.order.create({
             data: {
-                id: fixture + suffix,
-                userId: owner.id,
+                reference: fixture + suffix,
+                customerId: owner.id,
                 createdAt: new Date(createdAt),
                 total,
                 status,
-                items: { create: { productId: productId(2), name: '売上集計の採点商品', unitPrice: 600, quantity } }
+                items: { create: { productId: soldProduct.id, name: '売上集計の採点商品', unitPrice: 600, quantity } }
             }
         });
     }
@@ -77,8 +79,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
     if (!app || !db) return;
-    await db.order.deleteMany({ where: { id: { startsWith: fixture } } });
-    await db.product.deleteMany({ where: { id: { startsWith: fixture } } });
+    await db.order.deleteMany({ where: { reference: { startsWith: fixture } } });
+    await db.product.deleteMany({ where: { code: { startsWith: fixture } } });
     await app.close();
 });
 

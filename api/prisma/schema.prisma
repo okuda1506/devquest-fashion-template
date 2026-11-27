@@ -9,42 +9,87 @@ datasource db {
 }
 
 model Product {
-    id          String @id
-    name        String
-    description String
-    category    String
-    price       Int
-    stock       Int
-    isPublished Boolean @default(true)
-    cartItems   CartItem[]
-    orderItems  OrderItem[]
+    id              Int             @id @default(autoincrement())
+    code            String          @unique @default(uuid())
+    name            String
+    description     String
+    categoryId      Int
+    price           Int
+    stock           Int
+    isPublished     Boolean         @default(true)
+    createdAt       DateTime        @default(now())
+    updatedAt       DateTime        @default(now())
+    productCategory ProductCategory @relation(fields: [categoryId], references: [id])
+    cartItems       CartItem[]
+    orderItems      OrderItem[]
 
-    @@index([category])
+    @@index([categoryId])
 }
 
-enum Role {
-    CUSTOMER
-    ADMIN
+model ProductCategory {
+    id       Int       @id @default(autoincrement())
+    code     String    @unique
+    name     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+    products Product[]
 }
 
-model User {
-    id           String @id @default(cuid())
-    email        String @unique
-    name         String
+model Customer {
+    id           Int               @id @default(autoincrement())
+    email        String            @unique
+    lastName     String
+    firstName    String?
+    lastNameKana String?
+    firstNameKana String?
+    phone        String?
     passwordHash String
-    role         Role @default(CUSTOMER)
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime          @default(now())
+    addresses    CustomerAddress[]
     cartItems    CartItem[]
     orders       Order[]
 }
 
-model CartItem {
-    userId    String
-    productId String
-    quantity  Int
-    user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-    product   Product @relation(fields: [productId], references: [id])
+model CustomerAddress {
+    id         Int      @id @default(autoincrement())
+    customerId Int
+    name       String
+    postalCode String
+    prefecture String
+    city       String
+    line1      String
+    line2      String   @default("")
+    phone      String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @default(now())
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-    @@id([userId, productId])
+    @@index([customerId, createdAt])
+}
+
+model Member {
+    id           Int     @id @default(autoincrement())
+    email        String  @unique
+    lastName     String
+    firstName    String?
+    passwordHash String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @default(now())
+}
+
+model CartItem {
+    id         Int      @id @default(autoincrement())
+    customerId Int
+    productId  Int
+    quantity   Int
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @default(now())
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    product    Product  @relation(fields: [productId], references: [id])
+
+    @@unique([customerId, productId])
+    @@index([productId])
 }
 
 enum OrderStatus {
@@ -52,26 +97,65 @@ enum OrderStatus {
     SHIPPED
 }
 
-model Order {
-    id         String @id @default(cuid())
-    userId     String
-    total      Int
-    shippingAddress Json?
-    status     OrderStatus @default(PLACED)
-    createdAt  DateTime @default(now())
-    user       User @relation(fields: [userId], references: [id])
-    items      OrderItem[]
+enum PaymentMethod {
+    CASH_ON_DELIVERY
+    CREDIT_CARD
+}
 
-    @@index([userId, createdAt])
+enum PaymentStatus {
+    PENDING
+    PAID
+}
+
+model Order {
+    id              Int                   @id @default(autoincrement())
+    reference       String                @unique @default(uuid())
+    customerId      Int?
+    guestEmail      String?
+    guestAccessHash String?
+    total           Int
+    shippingAddress OrderShippingAddress?
+    status          OrderStatus           @default(PLACED)
+    createdAt       DateTime              @default(now())
+    updatedAt       DateTime              @default(now())
+    paymentMethod   PaymentMethod         @default(CASH_ON_DELIVERY)
+    paymentStatus   PaymentStatus         @default(PENDING)
+    paymentPaidAt   DateTime?
+    paymentTransactionId String?          @unique
+    customer        Customer?             @relation(fields: [customerId], references: [id], onDelete: Restrict)
+    items           OrderItem[]
+
+    @@index([customerId, createdAt])
+    @@index([createdAt])
+}
+
+model OrderShippingAddress {
+    id         Int    @id @default(autoincrement())
+    orderId    Int    @unique
+    name       String
+    postalCode String
+    prefecture String
+    city       String
+    line1      String
+    line2      String @default("")
+    phone      String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @default(now())
+    order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
 model OrderItem {
-    id        String @id @default(cuid())
-    orderId   String
-    productId String
+    id        Int     @id @default(autoincrement())
+    orderId   Int
+    productId Int
     name      String
     unitPrice Int
     quantity  Int
-    order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+    order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
     product   Product @relation(fields: [productId], references: [id])
+
+    @@index([orderId])
+    @@index([productId])
 }
