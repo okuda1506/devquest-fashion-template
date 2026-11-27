@@ -2,10 +2,11 @@ import { logEvents } from '../../common/logging/log-events';
 import { isConflictingWrite } from '../../database/prisma-conflict';
 import { checkoutConflict, checkoutMessages } from './checkout-errors';
 import { randomUUID } from 'node:crypto';
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client';
 import { logEvent } from '../../common/logging/logger';
 import { orderMessages } from '../orders/order-messages';
+import { PaymentService } from '../payments/payment.service';
 import { OrdersRepository } from '../orders/orders.repository';
 import { CheckoutRepository } from './checkout.repository';
 import { checkoutVersion, normalizeAddress } from './checkout-quote';
@@ -26,7 +27,8 @@ export class CheckoutService {
      */
     constructor(
         private readonly repo: CheckoutRepository,
-        private readonly orders: OrdersRepository
+        private readonly orders: OrdersRepository,
+        private readonly payments: PaymentService
     ) {}
 
     /**
@@ -134,6 +136,7 @@ export class CheckoutService {
             logEvent('info', logEvents.orderPlaced, { reason: 'already_committed' });
             return existingOrder;
         }
+        let approvedTransactionId: string | undefined;
         try {
             const order = await this.repo.transact(async (db) => {
                 const { items, total, shippingAddress, version } = await this.quote(buyer, input, db);
@@ -165,10 +168,16 @@ export class CheckoutService {
                     },
                     db
                 );
+                // 同じ確認 ID の挿入を先に確定候補として押さえ 二重決済を防ぐ
+                const payment = await this.payments.authorize(input.checkoutId, total, input.payment);
+                approvedTransactionId = payment?.paymentTransactionId;
                 if ('customerId' in buyer) await this.repo.clearCart(buyer.customerId, db);
-                return order;
+                return payment ? this.repo.savePayment(input.checkoutId, payment, db) : order;
             });
             logEvent('info', logEvents.orderPlaced, { reason: 'committed' });
+            if (order.paymentTransactionId) {
+                this.payments.recordSuccess(input.checkoutId, order.paymentTransactionId);
+            }
             return order;
         } catch (cause) {
             // 同じ確認 ID の別リクエストが先に確定した場合はその注文を返す
@@ -177,14 +186,17 @@ export class CheckoutService {
                 logEvent('info', logEvents.orderPlaced, { reason: 'concurrent_commit' });
                 return committed;
             }
+            if (approvedTransactionId) this.payments.recordRollback(input.checkoutId, approvedTransactionId);
             const reason =
                 cause instanceof BadRequestException
                     ? 'invalid_cart'
                     : cause instanceof ConflictException
                       ? 'cart_or_stock_changed'
-                      : isConflictingWrite(cause)
-                        ? 'concurrent_update'
-                        : 'unexpected_failure';
+                      : cause instanceof HttpException && cause.getStatus() === HttpStatus.PAYMENT_REQUIRED
+                        ? 'payment_declined'
+                        : isConflictingWrite(cause)
+                          ? 'concurrent_update'
+                          : 'unexpected_failure';
             logEvent(reason === 'unexpected_failure' ? 'error' : 'warn', logEvents.orderPlaced, { reason });
             if (isConflictingWrite(cause)) {
                 throw checkoutConflict('CONCURRENT_UPDATE', checkoutMessages.concurrentUpdate);

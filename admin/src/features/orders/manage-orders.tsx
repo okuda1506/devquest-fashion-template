@@ -1,7 +1,7 @@
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { orderLabels, yen } from '@thread/shared';
+import { orderLabels, paymentMethodLabels, paymentStatusLabels, yen } from '@thread/shared';
 import { AdminFeedback } from '../../components/admin-feedback';
 import { useAdminList } from '../../hooks/use-admin-list';
 
@@ -88,6 +88,28 @@ export function ManageOrders() {
                                     電話 {order.shippingAddress.phone}
                                 </p>
                             )}
+                            <dl className="admin-payment-details">
+                                <div>
+                                    <dt>決済方法</dt>
+                                    <dd>{paymentMethodLabels[order.paymentMethod ?? 'CASH_ON_DELIVERY']}</dd>
+                                </div>
+                                <div>
+                                    <dt>決済状況</dt>
+                                    <dd>{paymentStatusLabels[order.paymentStatus ?? 'PENDING']}</dd>
+                                </div>
+                                <div>
+                                    <dt>決済日時</dt>
+                                    <dd>
+                                        {order.paymentPaidAt ? (
+                                            <time dateTime={order.paymentPaidAt}>{new Date(order.paymentPaidAt).toLocaleString('ja-JP')}</time>
+                                        ) : '—'}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>模擬取引ID</dt>
+                                    <dd className="admin-mono">{order.paymentTransactionId ?? '—'}</dd>
+                                </div>
+                            </dl>
                             <table>
                                 <caption>注文明細</caption>
                                 <thead>

@@ -1,3 +1,4 @@
+import type { PaymentMethod, PaymentStatus } from '../constants/payment';
 import type { orderLabels } from '../constants/order-status';
 
 export type ShippingAddress = {
@@ -16,6 +17,10 @@ export type Order = {
     status: keyof typeof orderLabels;
     total: number;
     createdAt: string;
+    paymentMethod?: PaymentMethod;
+    paymentStatus?: PaymentStatus;
+    paymentPaidAt?: string | null;
+    paymentTransactionId?: string | null;
     shippingAddress?: ShippingAddress | null;
     items: { id: string; name: string; quantity: number; unitPrice: number }[];
 };

@@ -5,3 +5,4 @@ export { yen } from './format/currency';
 export type { CartItem } from './types/cart';
 export type { Order, ShippingAddress } from './types/order';
 export type { Product } from './types/product';
+export { paymentMethodLabels, paymentStatusLabels, type PaymentMethod, type PaymentStatus } from './constants/payment';

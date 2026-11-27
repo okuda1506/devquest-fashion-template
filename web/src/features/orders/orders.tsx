@@ -1,4 +1,4 @@
-import { orderLabels, type Order } from '@thread/shared';
+import { orderLabels, paymentMethodLabels, paymentStatusLabels, type Order } from '@thread/shared';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, yen } from '@thread/shared';
@@ -40,6 +40,7 @@ export function Orders() {
                             <p>
                                 {new Date(order.createdAt).toLocaleString('ja-JP')} ・ {orderLabels[order.status]}
                             </p>
+                            <p>{paymentMethodLabels[order.paymentMethod ?? 'CASH_ON_DELIVERY']} ・ {paymentStatusLabels[order.paymentStatus ?? 'PENDING']}</p>
                         </div>
                         <span>{yen(order.total)}</span>
                         <Link to={'/checkout/complete/' + encodeURIComponent(order.id)}>注文内容を見る</Link>

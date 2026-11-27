@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate, useOutletContext } from 'react-router-dom';
-import { type Order } from '@thread/shared';
+import { type Order, type PaymentMethod } from '@thread/shared';
 import { ApiError, api } from '@thread/shared';
 import { guestCartLines, guestCartSignature } from '../cart/guest-cart';
 import { useCart } from '../cart/cart-state';
@@ -10,6 +10,7 @@ import type { CheckoutContext, CheckoutReview } from './checkout.types';
 import { forgetGuestOrder, guestCheckoutPath, guestOrderApi, rememberGuestOrder } from './guest-order-session';
 import { OrderSummary } from './order-summary';
 import { DeliveryDetails } from './delivery-details';
+import { cardExpiry, cardSecurityCode, PaymentFields, testCards, type TestCardChoice } from './payment-fields';
 
 /** 注文内容と配送先を表示して注文の確定を受け付ける */
 export function CheckoutConfirm() {
@@ -19,6 +20,8 @@ export function CheckoutConfirm() {
     const [busy, setBusy] = useState(false);
     const sending = useRef(false);
     const [error, setError] = useState('');
+    const [method, setMethod] = useState<PaymentMethod>('CASH_ON_DELIVERY');
+    const [testCard, setTestCard] = useState<TestCardChoice>('approved');
 
     const checkoutPath = guest ? guestCheckoutPath : '/checkout';
     if (!review) return <Navigate to={checkoutPath} replace />;
@@ -32,7 +35,10 @@ export function CheckoutConfirm() {
         setError('');
         try {
             const { checkoutId, version, shippingAddress, email } = current;
-            const payload = { checkoutId, version, shippingAddress };
+            const payment = method === 'CREDIT_CARD'
+                ? { method, card: { number: testCards[testCard], expiry: cardExpiry, securityCode: cardSecurityCode } }
+                : { method };
+            const payload = { checkoutId, version, shippingAddress, payment };
             let order: Order;
             if (guest) {
                 rememberGuestOrder({ id: checkoutId, cartSignature: guestCartSignature(guestItems) });
@@ -48,7 +54,11 @@ export function CheckoutConfirm() {
             }
             navigate(checkoutPath + '/complete/' + encodeURIComponent(order.id), { replace: true });
         } catch (cause) {
-            if (guest && cause instanceof ApiError && cause.status === 409 && cause.code !== 'CONCURRENT_UPDATE') {
+            if (guest && cause instanceof ApiError && (
+                cause.status === 400 ||
+                cause.status === 402 ||
+                (cause.status === 409 && cause.code !== 'CONCURRENT_UPDATE')
+            )) {
                 forgetGuestOrder(current.checkoutId);
             }
             setError((cause as Error).message);
@@ -63,7 +73,7 @@ export function CheckoutConfirm() {
             <div className="checkout-grid">
                 <div>
                     <section className="checkout-card" aria-labelledby="delivery-title">
-                        <h2 id="delivery-title">配送先とお支払い</h2>
+                        <h2 id="delivery-title">配送先</h2>
                         <DeliveryDetails address={review.shippingAddress} />
                         {guest && <p>ご連絡先メールアドレス {review.email}</p>}
                     </section>
@@ -73,7 +83,19 @@ export function CheckoutConfirm() {
                             void placeOrder(event, review);
                         }}
                     >
+                        <PaymentFields
+                            method={method}
+                            onMethodChange={(next) => { setMethod(next); setError(''); }}
+                            testCard={testCard}
+                            onTestCardChange={(next) => { setTestCard(next); setError(''); }}
+                            disabled={busy}
+                        />
                         <p>こちらは演習用の注文です。実際の請求・配送はありません。</p>
+                        {busy && (
+                            <p role="status">
+                                {method === 'CREDIT_CARD' ? '模擬決済を処理しています…' : '注文を処理しています…'}
+                            </p>
+                        )}
                         {error && (
                             <div className="checkout-error" role="alert">
                                 <p>{error}</p>

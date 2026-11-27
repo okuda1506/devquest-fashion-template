@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
-import { orderLabels, type Order } from '@thread/shared';
+import { orderLabels, paymentMethodLabels, paymentStatusLabels, type Order } from '@thread/shared';
 import { api } from '@thread/shared';
 import { useCart } from '../cart/cart-state';
 import { forgetGuestOrder, guestCheckoutPath, guestOrderApi } from './guest-order-session';
@@ -66,6 +66,7 @@ export function CheckoutComplete() {
                         <h2>注文番号</h2>
                         <p className="checkout-order-id">{order.orderNumber ?? order.id}</p>
                         <p>{orderLabels[order.status]}</p>
+                        <p>{paymentMethodLabels[order.paymentMethod ?? 'CASH_ON_DELIVERY']} ・ {paymentStatusLabels[order.paymentStatus ?? 'PENDING']}</p>
                         {order.shippingAddress && <DeliveryDetails address={order.shippingAddress} />}
                         <div className="checkout-links">
                             {guest ? (

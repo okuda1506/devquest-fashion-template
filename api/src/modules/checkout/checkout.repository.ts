@@ -63,6 +63,17 @@ export class CheckoutRepository {
     }
 
     /**
+     * 決済結果を同じ注文に保存して更新後の注文情報を返す
+     */
+    async savePayment(
+        reference: string,
+        payment: Pick<Prisma.OrderUpdateInput, 'paymentMethod' | 'paymentStatus' | 'paymentPaidAt' | 'paymentTransactionId'>,
+        db: Prisma.TransactionClient
+    ) {
+        return orderView(await db.order.update({ ...orderDetails, where: { reference }, data: payment }));
+    }
+
+    /**
      * 確定済みのカート明細を削除する
      */
     clearCart(customerId: number, db: Prisma.TransactionClient) {

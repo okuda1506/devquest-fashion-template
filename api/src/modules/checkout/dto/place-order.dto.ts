@@ -1,5 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsHash, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsHash, IsObject, IsUUID, ValidateIf, ValidateNested } from 'class-validator';
+import { CheckoutPaymentDto } from '../../payments/dto/checkout-payment.dto';
 import { PreviewOrderDto } from './preview-order.dto';
 
 /**
@@ -8,4 +10,11 @@ import { PreviewOrderDto } from './preview-order.dto';
 export class PlaceOrderDto extends PreviewOrderDto {
     @ApiProperty() @IsUUID('4') checkoutId!: string;
     @ApiProperty() @IsHash('sha256') version!: string;
+
+    @ApiPropertyOptional({ type: CheckoutPaymentDto })
+    @ValidateIf((_, value) => value !== undefined)
+    @IsObject()
+    @ValidateNested()
+    @Type(() => CheckoutPaymentDto)
+    payment?: CheckoutPaymentDto;
 }

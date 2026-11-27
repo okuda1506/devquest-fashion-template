@@ -97,6 +97,16 @@ enum OrderStatus {
     SHIPPED
 }
 
+enum PaymentMethod {
+    CASH_ON_DELIVERY
+    CREDIT_CARD
+}
+
+enum PaymentStatus {
+    PENDING
+    PAID
+}
+
 model Order {
     id              Int                   @id @default(autoincrement())
     reference       String                @unique @default(uuid())
@@ -108,6 +118,10 @@ model Order {
     status          OrderStatus           @default(PLACED)
     createdAt       DateTime              @default(now())
     updatedAt       DateTime              @default(now())
+    paymentMethod   PaymentMethod         @default(CASH_ON_DELIVERY)
+    paymentStatus   PaymentStatus         @default(PENDING)
+    paymentPaidAt   DateTime?
+    paymentTransactionId String?          @unique
     customer        Customer?             @relation(fields: [customerId], references: [id], onDelete: Restrict)
     items           OrderItem[]
 

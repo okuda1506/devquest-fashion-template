@@ -136,7 +136,7 @@ export function CheckoutAddress() {
                             </fieldset>
                             <div className="checkout-method">
                                 <h2>配送・お支払い</h2>
-                                <p>宅配便（送料無料）／ 代金引換（模擬）</p>
+                                <p>宅配便（送料無料）。お支払い方法は注文確認画面で選べます。</p>
                             </div>
                             {error && (
                                 <p className="checkout-error" role="alert">

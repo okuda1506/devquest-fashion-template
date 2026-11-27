@@ -32,10 +32,6 @@ export function DeliveryDetails({ address }: { address: ShippingAddress }) {
                 <dt>配送方法</dt>
                 <dd>宅配便</dd>
             </div>
-            <div>
-                <dt>お支払い</dt>
-                <dd>代金引換（模擬）</dd>
-            </div>
         </dl>
     );
 }
