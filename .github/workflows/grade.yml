@@ -1,10 +1,10 @@
 name: THREAD 課題採点
+run-name: 'DevQuest PR #${{ github.event.pull_request.number }}'
 
 on:
-  push:
-    branches: ['main', 'task/DEV-*']
   pull_request:
     branches: ['main']
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   grade:
+    if: github.repository != 'okuda1506/devquest-fashion-template' || startsWith(github.head_ref, 'task/')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -30,22 +31,36 @@ jobs:
           --health-interval 5s --health-timeout 3s --health-retries 12
     env:
       DATABASE_URL: postgresql://thread:thread@127.0.0.1:5432/thread
+      TASK_BRANCH: ${{ github.event.pull_request.head.ref }}
       THREAD_JWT_SECRET: ci-disposable-thread-secret-not-for-production
     steps:
+      - name: PR の提出元を確認
+        env:
+          HEAD_REPO_ID: ${{ github.event.pull_request.head.repo.id }}
+          BASE_REPO_ID: ${{ github.event.pull_request.base.repo.id }}
+        shell: bash
+        run: |
+          if [[ "$HEAD_REPO_ID" != "$BASE_REPO_ID" ]] || [[ ! "$TASK_BRANCH" =~ ^task/DEV-1(0[1-9]|[1-3][0-9]|4[0-3])$ ]]; then
+            echo '同じリポジトリの指定課題ブランチから main への PR を作成してください。'
+            exit 1
+          fi
       - name: 提出コミットを取得
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - name: 指定ブランチと採点ファイルを照合
-        if: github.event_name == 'push' && startsWith(github.ref_name, 'task/')
+      - name: 最新の main と採点ファイルを照合
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         shell: bash
         run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^task/DEV-1(0[1-9]|[1-3][0-9]|4[0-3])$ ]]; then
-            echo '対象の課題ブランチが存在しません。'
+          if ! git merge-base --is-ancestor "$BASE_SHA" HEAD; then
+            echo '最新の main を作業ブランチに取り込んでから push してください。'
             exit 1
           fi
-          git fetch --depth=1 https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v9
-          git diff --exit-code FETCH_HEAD "$GITHUB_SHA" -- .github/workflows grading package.json package-lock.json eslint.config.js .npmrc api/.npmrc web/.npmrc admin/.npmrc packages/shared/.npmrc api/package.json api/prisma.config.ts api/prisma/seeds/ api/prisma/scripts/ api/jest.config.cjs api/tsconfig.json api/tsconfig.build.json web/package.json web/vite.config.ts web/tsconfig.json web/src/test-setup.ts admin/package.json admin/vite.config.ts admin/tsconfig.json packages/shared/package.json ':(glob)**/*.test.ts' ':(glob)**/*.test.tsx' ':(glob)**/*.spec.ts' ':(glob)**/*.spec.tsx'
+          git fetch --depth=1 https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v10
+          git diff --exit-code FETCH_HEAD HEAD -- .github/workflows grading package.json package-lock.json eslint.config.js .npmrc api/.npmrc web/.npmrc admin/.npmrc packages/shared/.npmrc api/package.json api/prisma.config.ts api/prisma/seeds/ api/prisma/scripts/ api/jest.config.cjs api/tsconfig.json api/tsconfig.build.json web/package.json web/vite.config.ts web/tsconfig.json web/src/test-setup.ts admin/package.json admin/vite.config.ts admin/tsconfig.json packages/shared/package.json ':(glob)**/*.test.ts' ':(glob)**/*.test.tsx' ':(glob)**/*.spec.ts' ':(glob)**/*.spec.tsx'
       - name: Node.js をセットアップ
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -65,14 +80,13 @@ jobs:
           npm test
           npm run build
       - name: 回帰テスト
-        if: github.event_name == 'push' && startsWith(github.ref_name, 'task/')
-        run: npm run grade -- "$GITHUB_REF_NAME" regression
+        run: npm run grade -- "$TASK_BRANCH" regression
       - name: DevQuest criterion 1
-        if: (success() || failure()) && steps.prerequisites.outcome == 'success' && github.event_name == 'push' && startsWith(github.ref_name, 'task/')
-        run: npm run grade -- "$GITHUB_REF_NAME" 1
+        if: (success() || failure()) && steps.prerequisites.outcome == 'success'
+        run: npm run grade -- "$TASK_BRANCH" 1
       - name: DevQuest criterion 2
-        if: (success() || failure()) && steps.prerequisites.outcome == 'success' && github.event_name == 'push' && startsWith(github.ref_name, 'task/')
-        run: npm run grade -- "$GITHUB_REF_NAME" 2
+        if: (success() || failure()) && steps.prerequisites.outcome == 'success'
+        run: npm run grade -- "$TASK_BRANCH" 2
       - name: DevQuest criterion 3
-        if: (success() || failure()) && steps.prerequisites.outcome == 'success' && github.event_name == 'push' && startsWith(github.ref_name, 'task/')
-        run: npm run grade -- "$GITHUB_REF_NAME" 3
+        if: (success() || failure()) && steps.prerequisites.outcome == 'success'
+        run: npm run grade -- "$TASK_BRANCH" 3

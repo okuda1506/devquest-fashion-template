@@ -193,7 +193,21 @@ npm run grade -- task/DEV-101
 > この演習では `main` ブランチを**本番リリースの基準となるコード**に見立てて運用します。各課題は `main` から作成した作業ブランチで改修し、採点に合格したら PR を `main` にマージすることで、実務の開発・リリースフローを疑似体験します。
 > 作業ブランチはローカル環境そのものではなく、実際にアプリを動かすのは学習者のPCです。**`main` にマージしても本番サーバーへのデプロイは行われません。**
 
-課題を進めるときは、DevQuest 指定のブランチに push します。採点に合格したら PR を作成して main にマージし、DevQuest で「マージを確認」を押すと次の課題が解放されます。手元で採点を実行する場合は、DB 更新を伴うため演習データと分けた使い捨ての PostgreSQL を使用してください。課題でお気に入り・履歴・通知などの従属レコードに外部キーを付ける場合は、親レコードの削除時に採点用データも片付くように `onDelete: Cascade` を設定してください。
+1. DevQuest 指定の作業ブランチで改修して push します。GitHub Actions の **THREAD CI** で型チェック・Lint・通常のテスト・ビルドが通ることを確認します。
+2. GitHub で作業ブランチから `main` への Pull Request（PR）を開きます。**THREAD 課題採点** の `grade` が課題の条件と過去課題の回帰を検証します。DEV-101 の最初の PR で、次の手順に沿って `main` の保護も設定します。
+3. DevQuest の「採点結果を確認」で結果を確認します。不合格なら PR のログを確認して修正し、同じブランチに push します。開いている PR が更新され、最新のコミットが再採点されます。
+4. 合格したら GitHub で PR をマージします。DevQuest で「マージを確認」を押すと次の課題が解放されます。
+
+### main のブランチ保護
+
+テンプレートから作成したリポジトリでは、最初の PR をマージする前に学習者自身で設定します。
+
+1. 自分の演習リポジトリの **Settings → Branches → Add classic branch protection rule** を開き、**Branch name pattern** に `main` を入力します。
+2. **Require a pull request before merging** をオンにします。個人演習では **Require approvals** をオフにします。
+3. **Require status checks to pass before merging** と **Require branches to be up to date before merging** をオンにし、検索欄で **grade** を追加します。GitHub Actions がチェックの提供元として表示されたら選択します。候補に出なければ DEV-101 の PR を開き、採点が一度実行されてから再度検索します。初回の採点は不合格でも設定できます。
+4. **Do not allow bypassing the above settings** をオンにして保存します。以後は PR の採点に合格してからマージします。
+
+手元で採点を実行する場合は、DB 更新を伴うため演習データと分けた使い捨ての PostgreSQL を使用してください。課題でお気に入り・履歴・通知などの従属レコードに外部キーを付ける場合は、親レコードの削除時に採点用データも片付くように `onDelete: Cascade` を設定してください。
 
 ### ログを使った調査
 
@@ -213,16 +227,16 @@ API のログレベルは `THREAD_LOG_LEVEL=debug|info|warn|error` で設定で�
 
 ### 採点の更新（すでに演習中の場合）
 
-新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。模擬決済対応版は採点タグ `thread-quests-v9` に対応します。旧版で演習中の場合は、その版で対応する課題を続けられます。新構成に移行するなら作業をコミットしてから、既存の修正と上流の差分を統合してください。以下は v8 からの移行例です。
+新しく演習を始める場合は、DevQuest の案内から演習リポジトリを作成します。PR 採点対応版は採点タグ `thread-quests-v10` に対応します。v9 以前で演習中の場合は、従来どおり指定ブランチへの push で採点されます。v9 から PR 採点へ移行する場合は、取り掛かっている課題をマージしてから既存の修正に上流の差分を統合してください。
 
 ```sh
 git switch main
 git pull --ff-only origin main
-git switch -c chore/thread-quests-v9
-git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v8:refs/tags/thread-quests-v8 refs/tags/thread-quests-v9:refs/tags/thread-quests-v9
-git diff --binary thread-quests-v8 thread-quests-v9 -- . ':(exclude)README.md' | git apply --3way --index
+git switch -c chore/thread-quests-v10
+git fetch https://github.com/okuda1506/devquest-fashion-template.git refs/tags/thread-quests-v9:refs/tags/thread-quests-v9 refs/tags/thread-quests-v10:refs/tags/thread-quests-v10
+git diff --binary thread-quests-v9 thread-quests-v10 -- . ':(exclude)README.md' | git apply --3way --index
 ```
 
-競合があれば学習済みの改修を維持して解消し、従来のテストを確認してから PR を `main` にマージしてください。`grading/`、ワークフロー、依存関係・採点設定は v9 と一致させます。v7 以前から更新する場合は、作成時の採点タグと v9 の差分を確認してください。既存の修正が移動前のファイルにある場合は、[コード構成](docs/code-architecture.md) を見て移動先へ反映します。v2 から DEV-141 以降へ進む場合は v3 の差分も先に取り込みます。DevQuest で登録済みのリポジトリを使うと既存の進捗を引き継げます。
+既存の改修を維持して競合を解消し、`grading/`・ワークフロー・依存関係・採点設定を v10 と一致させます。型チェック・Lint・テスト・ビルドを確認したうえで、ブランチ保護を設定する前に移行コミットを `main` に反映します。次の課題の PR で、上記のブランチ保護を有効にします。v8 以前から更新する場合は作成時の採点タグから v9 までの差分も確認し、移動したファイルの修正は [コード構成](docs/code-architecture.md) を見て反映します。登録済みのリポジトリを使えば進捗を引き継げます。
 
 作業を終えるときは開発サーバーを停止し、`docker compose down` を実行します。DB の名前付きボリュームは保持されます。
