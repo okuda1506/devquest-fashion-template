@@ -94,6 +94,20 @@ npm run dev
 
 起動後は Windows または macOS のブラウザで EC サイトと店舗管理を開き、DevQuest の起動確認にチェックを入れます。
 
+更新後に API で `updatedAt does not exist in type OrderOmit` が出る場合は、Prisma Client を再生成します。開発サーバーを `Ctrl+C` で停止し、リポジトリ直下で次を実行してください。
+
+```sh
+set -a
+. ./.env
+set +a
+docker compose up -d --wait
+npm run db:generate
+npm run db:migrate
+npm run dev
+```
+
+API の起動失敗に続いて EC に `ECONNREFUSED 127.0.0.1:3001` が表示された場合も、まず API のエラーを解消してください。DevQuest の紹介ページをローカルで確認するときは、別の `devquest-app` ディレクトリで `VITE_GOOGLE_ONBOARDING=true npm run dev` を実行します。
+
 更新後に `@thread/shared` が見つからない場合は、開発サーバーを `Ctrl+C` で停止し、リポジトリ直下で `npm ci` を実行してから `npm run dev` で起動します。
 
 `THREAD_JWT_SECRET` のエラーが出る場合は、リポジトリ直下の `.env` を確認します。値が未設定・空、または32文字未満の場合は、以下のコマンドで64文字のランダムな値を生成します。
